@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { dbQuery } from '../db/client';
 import { retrieveRelevantContext } from './retrievalEngine';
+import { logExecution } from '../utils/executionLogger';
 
 dotenv.config();
 
@@ -101,6 +102,7 @@ export async function runAgentConversation(
   chatId?: string,
   categoryFilter?: string
 ): Promise<AgentResponse> {
+  const startTime = Date.now();
   
   // 1. Obtener o inicializar el ID del chat
   let activeChatId = chatId;
@@ -123,6 +125,18 @@ export async function runAgentConversation(
   if (!context || context.trim() === '') {
     const fallbackReply = 'Lo siento, no encontré esta información en los documentos corporativos disponibles.\n\nPor favor, ponte en contacto con el **Comité de Documentación Corporativa** o con el **Líder Técnico** para resolver esta inquietud específica.';
     await saveMessage(activeChatId, 'model', fallbackReply);
+    
+    // Guardar log local
+    const latencyMs = Date.now() - startTime;
+    logExecution({
+      timestamp: new Date().toISOString(),
+      chatId: activeChatId,
+      query: userMessage,
+      context: 'N/A - Sin resultados vectoriales relevantes',
+      response: fallbackReply,
+      latencyMs
+    });
+
     return { reply: fallbackReply, chatId: activeChatId };
   }
 
@@ -180,6 +194,17 @@ Recuerda responder solo usando esta fuente y citar las referencias al final.`;
     // 9. Guardar respuesta del agente en la base de datos
     await saveMessage(activeChatId, 'model', replyText);
 
+    // Guardar log local
+    const latencyMs = Date.now() - startTime;
+    logExecution({
+      timestamp: new Date().toISOString(),
+      chatId: activeChatId,
+      query: userMessage,
+      context,
+      response: replyText,
+      latencyMs
+    });
+
     return {
       reply: replyText,
       chatId: activeChatId
@@ -187,6 +212,18 @@ Recuerda responder solo usando esta fuente y citar las referencias al final.`;
   } catch (error) {
     console.error('Error al generar respuesta de conversación del agente:', error);
     const errorReply = 'Lo siento, ocurrió un error en la capa de procesamiento cognitivo de la IA.';
+    
+    // Guardar log local
+    const latencyMs = Date.now() - startTime;
+    logExecution({
+      timestamp: new Date().toISOString(),
+      chatId: activeChatId,
+      query: userMessage,
+      context,
+      response: errorReply,
+      latencyMs
+    });
+
     return {
       reply: errorReply,
       chatId: activeChatId
