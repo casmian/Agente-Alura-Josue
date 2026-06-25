@@ -1,56 +1,91 @@
-# Agente Alura 🤖📚
+# Agente Alura: Plataforma de Mentoría y Onboarding Inteligente 🤖📚
 
-**Agente Alura** es un asistente cognitivo inteligente diseñado para integrarse con la plataforma educativa Alura, con el fin de guiar, motivar y resolver dudas de los estudiantes en tiempo real.
+**Agente Alura** es un ecosistema cognitivo de nivel empresarial diseñado para integrarse con la plataforma educativa Alura. Su propósito principal es actuar como un mentor y tutor interactivo para desarrolladores junior y estudiantes, guiándolos durante su proceso de aprendizaje y sus primeras contribuciones en el código.
 
----
-
-## 🎯 ¿Qué debe hacer el Agente? (Instrucciones del Proyecto)
-
-De acuerdo con los objetivos del proyecto, el agente debe ser capaz de desempeñar las siguientes **capacidades y funciones clave**:
-
-### 1. Tutor de Programación Interactivo
-* **Explicación de Conceptos**: Explicar de manera clara y didáctica conceptos técnicos complejos (desde bases de programación hasta desarrollo avanzado).
-* **Evaluación de Código**: Evaluar las soluciones de código propuestas por los alumnos de forma constructiva, identificando áreas de mejora sin entregar la respuesta directa.
-* **Propuesta de Retos**: Diseñar retos y ejercicios prácticos adaptados al nivel del estudiante para reforzar el aprendizaje de manera interactiva.
-
-### 2. Recomendador de Rutas
-* **Análisis de Perfil**: Estudiar el perfil del alumno, su progreso actual en la plataforma y sus intereses profesionales.
-* **Sugerencia de Aprendizaje**: Aconsejar de forma inteligente los siguientes cursos, especializaciones y contenidos educativos más adecuados para su crecimiento.
-
-### 3. Compañero de Consultas (RAG)
-* **Búsqueda Semántica**: Responder preguntas específicas sobre los cursos y el funcionamiento de la plataforma.
-* **Bases de Información**: Recuperar información contextualizada directamente desde las transcripciones de las clases, documentación de Alura y preguntas frecuentes del foro.
-
-### 4. Sandbox / Ejecución de Herramientas
-* **Búsqueda Externa (Google Search)**: Consultar internet de forma segura para obtener documentación técnica actualizada.
-* **Validación de Código**: Probar y validar la sintaxis o estructura de pequeños fragmentos de código de forma interactiva utilizando capacidades de ejecución segura (*Function Calling*).
+A través de capacidades de procesamiento de lenguaje natural de última generación, recuperación semántica de datos (RAG) y ejecución segura de herramientas, el Agente Alura simula la interacción con un desarrollador líder o tutor socrático para guiar a los usuarios hacia el éxito sin darles directamente las respuestas.
 
 ---
 
-## 🛠️ Pila Tecnológica del Proyecto
+## 🎯 Misión y Visión del Proyecto
 
-Para la construcción del Agente Alura, se ha definido la siguiente arquitectura y pila tecnológica recomendada:
+### Misión
+Acelerar la curva de aprendizaje de los programadores junior y estudiantes mediante una mentoría personalizada e interactiva disponible 24/7, garantizando que entiendan la arquitectura del software, sigan las mejores prácticas y aprendan a depurar problemas de forma autónoma.
+
+### Visión
+Convertirse en el estándar de mentoría digital para plataformas educativas de programación, donde la inteligencia artificial asista no solo en la resolución de dudas teóricas, sino en la validación práctica de código y la recomendación predictiva de trayectorias de carrera tecnológica.
+
+---
+
+## 🛠️ Capacidades Clave del Agente (Reglamento Operativo)
+
+De acuerdo con las directrices académicas e institucionales de Alura, el agente debe operar bajo los siguientes cuatro pilares funcionales:
+
+### 1. Tutor de Programación Interactivo (Método Socrático)
+* **Desglose de Conceptos Complejos**: Explicar conceptos de software abstractos (inyección de dependencias, concurrencia, normalización de bases de datos, closures, etc.) usando analogías y ejemplos visuales adaptados al nivel del usuario.
+* **Evaluación de Código Estructural**: Analizar fragmentos de código proporcionados por el estudiante para identificar errores de sintaxis, cuellos de botella de rendimiento y malas prácticas.
+* **Guía en lugar de Respuestas**: En lugar de reescribir el código corregido para el estudiante, el agente señala el error lógico y hace preguntas guía para que el estudiante aprenda a resolver el problema por sí mismo.
+* **Generación de Retos Técnicos**: Crear ejercicios prácticos personalizados de código basados en el tema que el alumno está estudiando actualmente.
+
+### 2. Recomendador Dinámico de Rutas de Aprendizaje
+* **Análisis de Perfil Cognitivo**: Analizar de manera inteligente el historial de cursos completados por el alumno, su tiempo promedio de estudio y el área tecnológica de su interés (Frontend, Backend, Cloud, Data Science).
+* **Predicción de Trayectoria de Carrera**: Recomendar los siguientes pasos específicos dentro del catálogo de cursos de Alura para ayudar al estudiante a alcanzar sus metas profesionales.
+
+### 3. Compañero de Consultas y RAG (Retrieval-Augmented Generation)
+* **Búsqueda Semántica Local**: Acceder a una base de conocimientos vectorizada que contiene transcripciones de clases, artículos técnicos oficiales de Alura y preguntas recurrentes del foro comunitario.
+* **Trazabilidad de Fuentes**: Cada respuesta académica dada por el agente debe incluir la clase, video o artículo específico de Alura de donde se extrajo la información, asegurando transparencia y confianza.
+
+### 4. Sandbox de Ejecución y Herramientas (Function Calling)
+* **Búsqueda Web Segura**: Realizar consultas filtradas mediante APIs de búsqueda (ej. Google Search) únicamente para recuperar documentación oficial y actualizada sobre librerías o frameworks (ej. MDN, npm, PyPI).
+* **Compilación y Validación Interactiva**: Ejecutar pequeñas piezas de código de forma aislada y segura para demostrar comportamientos lógicos al usuario.
+
+---
+
+## 🚀 Arquitectura Detallada del Sistema
+
+El Agente Alura se compone de una arquitectura desacoplada de tres capas de nivel empresarial:
 
 ```mermaid
 graph TD
-    Client[Frontend: React + Vite + TS] <--> Server[Backend: Node.js + TS]
-    Server <--> LLM[Gemini API - SDK @google/genai]
-    Server <--> DB[(PostgreSQL + pgvector)]
+    subgraph Capa de Presentación
+        UI[React SPA + TypeScript] -->|Estilos Puros| CSS[Vanilla CSS Design System]
+    end
+
+    subgraph Capa de Orquestación y Lógica
+        Server[Express Server + TypeScript] <-->|Google Gen AI SDK| Gemini[Gemini 1.5 Pro / 2.0]
+        Server -->|Logging y Métricas| Logger[Winston Logger]
+    end
+
+    subgraph Capa de Datos e Indexación
+        DB[(PostgreSQL Database)] <-->|Búsqueda Vectorial| PgVector[pgvector Extension]
+    end
+
+    UI <-->|API REST / WebSockets| Server
 ```
 
-* **Frontend**:
-  - **Framework**: **React + Vite (TypeScript)** para una interfaz de usuario modular y de carga ultrarrápida.
-  - **Estilado**: **Vanilla CSS personalizado** (variables CSS, modo oscuro integrado, layouts fluidos y micro-animaciones fluidas de chat) para un control estético absoluto sin dependencias adicionales.
-* **Backend**:
-  - **Entorno**: **Node.js con TypeScript** (utilizando **Express** o **Fastify**) para la API, la memoria conversacional y la orquestación de herramientas.
-* **Integración de IA (LLM)**:
-  - **SDK**: **Google Gen AI SDK (`@google/genai`)** para la comunicación directa y optimizada con modelos avanzados de Gemini (como Gemini 1.5 Pro/Flash o Gemini 2.0).
-* **Almacenamiento e Indexación**:
-  - **Base de Datos**: **PostgreSQL con la extensión `pgvector`** para el almacenamiento de sesiones, perfiles de usuario y búsqueda vectorial (embeddings) para el sistema de RAG.
+### 1. Capa de Presentación (Frontend)
+Construida en **React con Vite y TypeScript** para asegurar un rendimiento de renderizado instantáneo. Los componentes visuales (ventanas de chat, burbujas de mensajes, bloques de código interactivos) se estilizan exclusivamente con **Vanilla CSS**, garantizando transiciones suaves, soporte de tema oscuro de alta calidad y un diseño responsivo adaptado a dispositivos móviles y de escritorio.
+
+### 2. Capa de Orquestación y Lógica (Backend)
+Servidor basado en **Node.js y Express (TypeScript)** que administra el flujo de conversación, la persistencia de las sesiones y la inicialización de herramientas. La comunicación con la IA se realiza de manera nativa mediante el **Google Gen AI SDK (`@google/genai`)**, lo que permite:
+* Integrar historial conversacional mediante estructuras de memoria a corto plazo.
+* Ejecutar llamadas a funciones (*Function Calling*) estructuradas.
+* Realizar consultas semánticas precisas.
+
+### 3. Capa de Persistencia e Indexación (Datos)
+Motor de base de datos **PostgreSQL** con la extensión **`pgvector`**. Esta base almacena el historial persistente de conversaciones de los alumnos, sus perfiles y las representaciones vectoriales (embeddings de 1536 dimensiones) de los documentos de conocimiento del proyecto.
 
 ---
 
-## ⚙️ Estructura del Repositorio
+## 📁 Organización del Repositorio
 
-* **`.agents/`**: Configuración de personalización e instrucciones de comportamiento para el asistente de IA durante el desarrollo.
-* **`google-skills/`**: Repositorio de referencia técnica para habilitar herramientas en la nube, APIs y configuraciones del entorno de procesamiento.
+A continuación se detalla la estructura física de directorios del proyecto:
+
+* **`.agents/`**: Directorio de personalización del agente.
+  - [`AGENTS.md`](file:///c:/Users/NeoUniverse/Agente-Alura/.agents/AGENTS.md): Reglas de desarrollo y restricciones tecnológicas para el asistente de IA.
+  - [`skills.json`](file:///c:/Users/NeoUniverse/Agente-Alura/.agents/skills.json): Configuración de importación de habilidades de desarrollo.
+* **`google-skills/`**: Habilidades y guías técnicas clonadas del repositorio oficial de Google como soporte de procesamiento e infraestructura en la nube.
+* **`knowledge-base/`**: Base de conocimientos utilizada por el motor RAG del agente.
+  - [`configuracion_entorno.md`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/configuracion_entorno.md): Manual paso a paso para desplegar el proyecto localmente.
+  - [`guia_estilo.md`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/guia_estilo.md): Normas de desarrollo, TypeScript, Conventional Commits y UI/UX.
+  - [`mapa_modulos.csv`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/mapa_modulos.csv): Mapa tabular con las responsabilidades del código y sus respectivos tests.
+* **`.gitignore`**: Configuración de exclusiones del sistema, dependencias de Node.js e IDEs.
