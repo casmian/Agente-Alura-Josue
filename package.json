@@ -8,7 +8,9 @@
     "start": "node dist/server/index.js",
     "dev": "ts-node-dev --respawn --transpile-only server/index.ts",
     "db:migrate": "ts-node server/db/migrate.ts",
-    "db:seed": "ts-node server/agent/ingestionService.ts"
+    "db:seed": "ts-node server/agent/ingestionService.ts",
+    "client:install": "cd client && npm install",
+    "client:dev": "cd client && npm run dev"
   },
   "dependencies": {
     "@google/genai": "^0.1.1",
