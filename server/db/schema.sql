@@ -39,6 +39,15 @@ CREATE TABLE IF NOT EXISTS document_chunks (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Crear un índice IVFFlat para acelerar búsquedas vectoriales por similitud de coseno
-CREATE INDEX IF NOT EXISTS document_chunks_embedding_idx 
-ON document_chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+-- =========================================================================
+-- OPTIMIZACIONES DE INDEXACIÓN (ETAPA 3)
+-- =========================================================================
+
+-- A. Crear un índice HNSW (Hierarchical Navigable Small World) para búsquedas vectoriales veloces y precisas
+CREATE INDEX IF NOT EXISTS document_chunks_hnsw_idx 
+ON document_chunks USING hnsw (embedding vector_cosine_ops);
+
+-- B. Crear índices tradicionales B-Tree en metadatos para permitir filtrado estructurado veloz
+CREATE INDEX IF NOT EXISTS document_chunks_categoria_idx ON document_chunks (categoria);
+CREATE INDEX IF NOT EXISTS document_chunks_documento_nombre_idx ON document_chunks (documento_nombre);
+CREATE INDEX IF NOT EXISTS document_chunks_autor_responsable_idx ON document_chunks (autor_responsable);
