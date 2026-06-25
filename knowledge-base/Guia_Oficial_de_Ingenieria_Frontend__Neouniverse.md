@@ -1,12 +1,12 @@
-# Guía Oficial de Ingeniería Front-end — Santos Pegasus Soluciones 📖✨
+# Guía Oficial de Ingeniería Front-end — Neouniverse 📖✨
 
-Este documento establece las directrices oficiales de codificación, las arquitecturas recomendadas y los estándares de diseño para el desarrollo frontend en **Santos Pegasus Soluciones**.
+Este documento establece las directrices oficiales de codificación, las arquitecturas recomendadas y los estándares de diseño para el desarrollo frontend en **Neouniverse**.
 
 ---
 
 ## 🏗️ 1. Estándar de Estilos CSS (Vanilla CSS Token System)
 
-Para mantener la excelencia visual e interactiva en las aplicaciones de Santos Pegasus Soluciones sin frameworks externos, se utiliza un sistema de diseño basado en variables de CSS (`CSS Custom Properties`) definidas globalmente:
+Para mantener la excelencia visual e interactiva en las aplicaciones de Neouniverse sin frameworks externos, se utiliza un sistema de diseño basado en variables de CSS (`CSS Custom Properties`) definidas globalmente:
 
 ```css
 :root {

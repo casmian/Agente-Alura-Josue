@@ -1,5 +1,5 @@
 Modulo,Ruta,Descripcion,Responsable,Test_Asociado
-Frontend App,src/main.tsx,Punto de entrada de la aplicacion cliente React para Santos Pegasus,Equipo Frontend,src/App.test.tsx
+Frontend App,src/main.tsx,Punto de entrada de la aplicacion cliente React para Neouniverse,Equipo Frontend,src/App.test.tsx
 Chat Interface,src/components/ChatWindow.tsx,Componente de chat interactivo con burbujas de mensajes y soporte de Markdown,Equipo Frontend,src/components/ChatWindow.test.tsx
 Backend Express Server,server/index.ts,Punto de partida del servidor Express y enrutamiento de la API,Equipo Backend,server/index.test.ts
 Agent Core Orchestrator,server/agent/orchestrator.ts,Modulo principal que conecta con Google Gen AI SDK (Gemini) y coordina el historial y herramientas,Equipo IA,server/agent/orchestrator.test.ts

@@ -1,6 +1,6 @@
-# Guía Oficial de Ingeniería Back-end — Santos Pegasus Soluciones 📖💻
+# Guía Oficial de Ingeniería Back-end — Neouniverse 📖💻
 
-Este documento establece las directrices oficiales de codificación, las arquitecturas recomendadas y los estándares de diseño para el desarrollo backend en **Santos Pegasus Soluciones**.
+Este documento establece las directrices oficiales de codificación, las arquitecturas recomendadas y los estándares de diseño para el desarrollo backend en **Neouniverse**.
 
 ---
 

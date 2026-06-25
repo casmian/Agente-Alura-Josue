@@ -85,7 +85,7 @@ export default function App() {
         {
           id: 'welcome',
           role: 'model',
-          content: '¡Hola! Soy el **Agente Alura**, tu mentor de código y asistente de onboarding para **Santos Pegasus Soluciones**. 🤖\n\nPuedo responder tus dudas técnicas sobre la base de conocimientos de desarrollo de la empresa (instalación del entorno, guías de ingeniería front-end y back-end, microservicios, respuesta a incidentes, etc.). ¿En qué puedo ayudarte hoy?',
+          content: '¡Hola! Soy el **Agente Alura**, tu mentor de código y asistente de onboarding para **Neouniverse**. 🤖\n\nPuedo responder tus dudas técnicas sobre la base de conocimientos de desarrollo de la empresa (instalación del entorno, guías de ingeniería front-end y back-end, microservicios, respuesta a incidentes, etc.). ¿En qué puedo ayudarte hoy?',
           timestamp: new Date(),
           feedback: null,
           references: []
@@ -235,7 +235,7 @@ export default function App() {
       {
         id: 'welcome',
         role: 'model',
-        content: '¡Hola! Soy el **Agente Alura**, tu mentor de código y asistente de onboarding para **Santos Pegasus Soluciones**. 🤖\n\nPuedo responder tus dudas técnicas sobre la base de conocimientos de desarrollo de la empresa (instalación del entorno, guías de ingeniería front-end y back-end, microservicios, respuesta a incidentes, etc.). ¿En qué puedo ayudarte hoy?',
+        content: '¡Hola! Soy el **Agente Alura**, tu mentor de código y asistente de onboarding para **Neouniverse**. 🤖\n\nPuedo responder tus dudas técnicas sobre la base de conocimientos de desarrollo de la empresa (instalación del entorno, guías de ingeniería front-end y back-end, microservicios, respuesta a incidentes, etc.). ¿En qué puedo ayudarte hoy?',
         timestamp: new Date(),
         feedback: null,
         references: []

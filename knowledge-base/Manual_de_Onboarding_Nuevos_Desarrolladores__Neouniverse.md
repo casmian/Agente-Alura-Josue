@@ -1,12 +1,12 @@
-# Manual de Onboarding para Nuevos Desarrolladores — Santos Pegasus Soluciones 🛠️🚀
+# Manual de Onboarding para Nuevos Desarrolladores — Neouniverse 🛠️🚀
 
-Este manual contiene las instrucciones detalladas para desplegar de forma local y en la nube de **Oracle Cloud Infrastructure (OCI)** el ecosistema del **Agente Alura** en **Santos Pegasus Soluciones**.
+Este manual contiene las instrucciones detalladas para desplegar de forma local y en la nube de **Oracle Cloud Infrastructure (OCI)** el ecosistema del **Agente Alura** en **Neouniverse**.
 
 ---
 
 ## 📋 1. Requisitos Previos Generales
 
-Antes de iniciar la instalación en Santos Pegasus Soluciones, asegúrate de tener configurados los siguientes componentes:
+Antes de iniciar la instalación en Neouniverse, asegúrate de tener configurados los siguientes componentes:
 
 ### A. Entorno de Ejecución (Node.js)
 - **Versión requerida**: Node.js v20.x LTS o superior.
@@ -15,7 +15,7 @@ Antes de iniciar la instalación en Santos Pegasus Soluciones, asegúrate de ten
 ### B. Sistema Gestor de Base de Datos
 - **Opción Local**: Docker con PostgreSQL y la extensión `pgvector` habilitada:
   ```bash
-  docker run --name pg-pegasus-agent -e POSTGRES_PASSWORD=pegasus_secure_pass -e POSTGRES_DB=pegasus_db -p 5432:5432 -d ankane/pgvector:v0.5.1
+  docker run --name pg-neouniverse-agent -e POSTGRES_PASSWORD=neouniverse_secure_pass -e POSTGRES_DB=neouniverse_db -p 5432:5432 -d ankane/pgvector:v0.5.1
   ```
 - **Opción Nube (OCI)**: Base de datos **OCI PostgreSQL** administrada o ejecutada dentro de un contenedor en OCI Compute.
 
@@ -23,7 +23,7 @@ Antes de iniciar la instalación en Santos Pegasus Soluciones, asegúrate de ten
 
 ## ☁️ 2. Guía de Despliegue en Oracle Cloud Infrastructure (OCI)
 
-Para cumplir con las directrices operativas de Santos Pegasus Soluciones, utilizaremos al menos un servicio en la nube de OCI. A continuación se detalla la configuración recomendada:
+Para cumplir con las directrices operativas de Neouniverse, utilizaremos al menos un servicio en la nube de OCI. A continuación se detalla la configuración recomendada:
 
 ### Opción A: Despliegue en una Instancia de Cómputo (OCI Compute VM) - *Nivel Gratuito de OCI (Always Free)*
 1. **Crear Instancia**:
@@ -48,7 +48,7 @@ Para cumplir con las directrices operativas de Santos Pegasus Soluciones, utiliz
 
 ### Opción B: Integración de Almacenamiento (OCI Object Storage)
 Para el soporte de archivos de la empresa:
-1. Crea un **Bucket** en OCI Object Storage llamado `pegasus-agent-knowledge`.
+1. Crea un **Bucket** en OCI Object Storage llamado `neouniverse-agent-knowledge`.
 2. Genera credenciales de acceso de API de OCI (Customer Secret Key) para interactuar mediante el SDK de OCI (`@oracle/oci-sdk`) en el backend.
 3. El backend descargará y leerá dinámicamente los archivos de este Bucket para procesar sus contenidos y extraer los embeddings.
 
@@ -125,21 +125,21 @@ El servidor backend integra las siguientes librerías de Node.js para analizar d
 
 ## 🔑 5. Configuración del Archivo .env
 
-Crea el archivo `.env` en la raíz del proyecto. Asegúrate de configurar los valores correspondientes para Santos Pegasus Soluciones:
+Crea el archivo `.env` en la raíz del proyecto. Asegúrate de configurar los valores correspondientes para Neouniverse:
 
 ```env
 PORT=3000
 NODE_ENV=development
 
 # Base de datos PostgreSQL (local o instancia de OCI)
-DATABASE_URL="postgresql://postgres:pegasus_secure_pass@localhost:5432/pegasus_db?schema=public&sslmode=disable"
+DATABASE_URL="postgresql://postgres:neouniverse_secure_pass@localhost:5432/neouniverse_db?schema=public&sslmode=disable"
 
 # Clave de API de Gemini
 GEMINI_API_KEY="AIzaSyYourSecretAPIKeyGoesHere"
 
 # OCI Object Storage (Opcional - para integración remota de archivos)
 OCI_NAMESPACE="your-oci-namespace"
-OCI_BUCKET_NAME="pegasus-agent-knowledge"
+OCI_BUCKET_NAME="neouniverse-agent-knowledge"
 OCI_REGION="us-ashburn-1"
 ```
 

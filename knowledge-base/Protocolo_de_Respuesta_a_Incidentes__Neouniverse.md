@@ -1,6 +1,6 @@
-# Protocolo de Respuesta a Incidentes y Post-Mortems — Santos Pegasus Soluciones 🚨⚡
+# Protocolo de Respuesta a Incidentes y Post-Mortems — Neouniverse 🚨⚡
 
-Este protocolo establece los procedimientos oficiales para la identificación, contención, resolución y análisis post-mortem de incidentes de seguridad y disponibilidad tecnológica en **Santos Pegasus Soluciones**.
+Este protocolo establece los procedimientos oficiales para la identificación, contención, resolución y análisis post-mortem de incidentes de seguridad y disponibilidad tecnológica en **Neouniverse**.
 
 ---
 
