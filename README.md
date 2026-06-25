@@ -1,27 +1,56 @@
-# Agente Alura 🤖✨
+# Agente Alura 🤖📚
 
-Este repositorio está enfocado en el diseño, descripción y desarrollo del **Agente Alura** (un agente inteligente especializado para la plataforma educativa Alura).
-
----
-
-## 🎯 Objetivo del Proyecto
-
-El foco principal de este proyecto es definir, describir y construir un agente cognitivo capaz de integrarse con flujos de trabajo de Alura (por ejemplo, asistencia a estudiantes, recomendación de cursos, resolución de dudas o automatización de aprendizaje).
+**Agente Alura** es un asistente cognitivo inteligente diseñado para integrarse con la plataforma educativa Alura, con el fin de guiar, motivar y resolver dudas de los estudiantes en tiempo real.
 
 ---
 
-## 🛠️ Estructura y Soporte de Procesamiento
+## 🎯 ¿Qué debe hacer el Agente? (Instrucciones del Proyecto)
 
-Para asistirnos en el desarrollo y procesamiento técnico del proyecto, hemos integrado un entorno de soporte basado en habilidades de automatización:
+De acuerdo con los objetivos del proyecto, el agente debe ser capaz de desempeñar las siguientes **capacidades y funciones clave**:
 
-- **Configuración del Agente Integrado (`.agents/`)**: Registra directrices para el asistente de IA durante el desarrollo.
-- **Herramientas de Soporte (`google-skills/`)**: Una base conceptual basada en las especificaciones oficiales de habilidades de Google ([google/skills](https://github.com/google/skills)). Estas habilidades sirven únicamente como referencia técnica y aceleración para tareas de infraestructura (como despliegues en la nube, bases de datos o APIs) durante la creación de nuestro agente, pero **no** representan el núcleo del proyecto.
+### 1. Tutor de Programación Interactivo
+* **Explicación de Conceptos**: Explicar de manera clara y didáctica conceptos técnicos complejos (desde bases de programación hasta desarrollo avanzado).
+* **Evaluación de Código**: Evaluar las soluciones de código propuestas por los alumnos de forma constructiva, identificando áreas de mejora sin entregar la respuesta directa.
+* **Propuesta de Retos**: Diseñar retos y ejercicios prácticos adaptados al nivel del estudiante para reforzar el aprendizaje de manera interactiva.
+
+### 2. Recomendador de Rutas
+* **Análisis de Perfil**: Estudiar el perfil del alumno, su progreso actual en la plataforma y sus intereses profesionales.
+* **Sugerencia de Aprendizaje**: Aconsejar de forma inteligente los siguientes cursos, especializaciones y contenidos educativos más adecuados para su crecimiento.
+
+### 3. Compañero de Consultas (RAG)
+* **Búsqueda Semántica**: Responder preguntas específicas sobre los cursos y el funcionamiento de la plataforma.
+* **Bases de Información**: Recuperar información contextualizada directamente desde las transcripciones de las clases, documentación de Alura y preguntas frecuentes del foro.
+
+### 4. Sandbox / Ejecución de Herramientas
+* **Búsqueda Externa (Google Search)**: Consultar internet de forma segura para obtener documentación técnica actualizada.
+* **Validación de Código**: Probar y validar la sintaxis o estructura de pequeños fragmentos de código de forma interactiva utilizando capacidades de ejecución segura (*Function Calling*).
 
 ---
 
-## 🚀 Fases del Desarrollo (Agente Alura)
+## 🛠️ Pila Tecnológica del Proyecto
 
-1. **Definición de Requisitos**: Modelado de la personalidad, alcances y limitaciones del Agente Alura.
-2. **Arquitectura e Integraciones**: Diseño de los conectores con APIs externas, bases de datos y la plataforma Alura.
-3. **Implementación de la Lógica**: Desarrollo del motor de procesamiento cognitivo (prompt engineering, cadenas de herramientas, RAG, etc.).
-4. **Despliegue y Pruebas**: Proceso de puesta en marcha y validación del comportamiento del agente.
+Para la construcción del Agente Alura, se ha definido la siguiente arquitectura y pila tecnológica recomendada:
+
+```mermaid
+graph TD
+    Client[Frontend: React + Vite + TS] <--> Server[Backend: Node.js + TS]
+    Server <--> LLM[Gemini API - SDK @google/genai]
+    Server <--> DB[(PostgreSQL + pgvector)]
+```
+
+* **Frontend**:
+  - **Framework**: **React + Vite (TypeScript)** para una interfaz de usuario modular y de carga ultrarrápida.
+  - **Estilado**: **Vanilla CSS personalizado** (variables CSS, modo oscuro integrado, layouts fluidos y micro-animaciones fluidas de chat) para un control estético absoluto sin dependencias adicionales.
+* **Backend**:
+  - **Entorno**: **Node.js con TypeScript** (utilizando **Express** o **Fastify**) para la API, la memoria conversacional y la orquestación de herramientas.
+* **Integración de IA (LLM)**:
+  - **SDK**: **Google Gen AI SDK (`@google/genai`)** para la comunicación directa y optimizada con modelos avanzados de Gemini (como Gemini 1.5 Pro/Flash o Gemini 2.0).
+* **Almacenamiento e Indexación**:
+  - **Base de Datos**: **PostgreSQL con la extensión `pgvector`** para el almacenamiento de sesiones, perfiles de usuario y búsqueda vectorial (embeddings) para el sistema de RAG.
+
+---
+
+## ⚙️ Estructura del Repositorio
+
+* **`.agents/`**: Configuración de personalización e instrucciones de comportamiento para el asistente de IA durante el desarrollo.
+* **`google-skills/`**: Repositorio de referencia técnica para habilitar herramientas en la nube, APIs y configuraciones del entorno de procesamiento.
