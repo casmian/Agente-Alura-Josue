@@ -58,13 +58,27 @@ function subChunkSegment(text: string, maxChunkSize: number = 1000, overlap: num
  */
 function getDocumentCategory(fileName: string): string {
   const lowerName = fileName.toLowerCase();
-  if (lowerName.includes('entorno') || lowerName.includes('configuracion')) {
+  if (
+    lowerName.includes('entorno') || 
+    lowerName.includes('configuracion') || 
+    lowerName.includes('onboarding') || 
+    lowerName.includes('incidentes')
+  ) {
     return 'Entorno';
   }
-  if (lowerName.includes('estilo') || lowerName.includes('practicas')) {
+  if (
+    lowerName.includes('estilo') || 
+    lowerName.includes('practicas') || 
+    lowerName.includes('frontend') || 
+    lowerName.includes('backend')
+  ) {
     return 'Estilo';
   }
-  if (lowerName.includes('modulo') || lowerName.includes('arquitectura')) {
+  if (
+    lowerName.includes('modulo') || 
+    lowerName.includes('arquitectura') || 
+    lowerName.includes('dominios')
+  ) {
     return 'Arquitectura';
   }
   return 'General';

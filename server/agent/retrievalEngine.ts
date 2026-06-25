@@ -33,9 +33,29 @@ export interface RetrievedChunk {
 
 function getDocumentCategory(fileName: string): string {
   const lowerName = fileName.toLowerCase();
-  if (lowerName.includes('entorno') || lowerName.includes('configuracion')) return 'Entorno';
-  if (lowerName.includes('estilo') || lowerName.includes('practicas')) return 'Estilo';
-  if (lowerName.includes('modulo') || lowerName.includes('arquitectura')) return 'Arquitectura';
+  if (
+    lowerName.includes('entorno') || 
+    lowerName.includes('configuracion') || 
+    lowerName.includes('onboarding') || 
+    lowerName.includes('incidentes')
+  ) {
+    return 'Entorno';
+  }
+  if (
+    lowerName.includes('estilo') || 
+    lowerName.includes('practicas') || 
+    lowerName.includes('frontend') || 
+    lowerName.includes('backend')
+  ) {
+    return 'Estilo';
+  }
+  if (
+    lowerName.includes('modulo') || 
+    lowerName.includes('arquitectura') || 
+    lowerName.includes('dominios')
+  ) {
+    return 'Arquitectura';
+  }
   return 'General';
 }
 

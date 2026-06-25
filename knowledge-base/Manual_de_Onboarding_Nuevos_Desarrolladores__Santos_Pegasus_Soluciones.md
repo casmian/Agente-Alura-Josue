@@ -1,21 +1,21 @@
-# Manual de Configuración del Entorno de Desarrollo y Despliegue en OCI 🛠️🚀
+# Manual de Onboarding para Nuevos Desarrolladores — Santos Pegasus Soluciones 🛠️🚀
 
-Este manual contiene las instrucciones detalladas para desplegar de forma local y en la nube de **Oracle Cloud Infrastructure (OCI)** el proyecto del **Agente Alura**.
+Este manual contiene las instrucciones detalladas para desplegar de forma local y en la nube de **Oracle Cloud Infrastructure (OCI)** el ecosistema del **Agente Alura** en **Santos Pegasus Soluciones**.
 
 ---
 
 ## 📋 1. Requisitos Previos Generales
 
-Antes de iniciar la instalación, asegúrate de tener configurados los siguientes componentes:
+Antes de iniciar la instalación en Santos Pegasus Soluciones, asegúrate de tener configurados los siguientes componentes:
 
 ### A. Entorno de Ejecución (Node.js)
 - **Versión requerida**: Node.js v20.x LTS o superior.
 - **Gestor de versiones recomendado**: `nvm` (Node Version Manager).
 
 ### B. Sistema Gestor de Base de Datos
-- **Opción Local**: Docker con PostgreSQL y `pgvector`:
+- **Opción Local**: Docker con PostgreSQL y la extensión `pgvector` habilitada:
   ```bash
-  docker run --name pg-agente-alura -e POSTGRES_PASSWORD=alura_secure_pass -e POSTGRES_DB=agente_alura -p 5432:5432 -d ankane/pgvector:v0.5.1
+  docker run --name pg-pegasus-agent -e POSTGRES_PASSWORD=pegasus_secure_pass -e POSTGRES_DB=pegasus_db -p 5432:5432 -d ankane/pgvector:v0.5.1
   ```
 - **Opción Nube (OCI)**: Base de datos **OCI PostgreSQL** administrada o ejecutada dentro de un contenedor en OCI Compute.
 
@@ -23,7 +23,7 @@ Antes de iniciar la instalación, asegúrate de tener configurados los siguiente
 
 ## ☁️ 2. Guía de Despliegue en Oracle Cloud Infrastructure (OCI)
 
-Para cumplir con las reglas del reto, utilizaremos al menos un servicio en la nube de OCI. A continuación se detalla la configuración recomendada:
+Para cumplir con las directrices operativas de Santos Pegasus Soluciones, utilizaremos al menos un servicio en la nube de OCI. A continuación se detalla la configuración recomendada:
 
 ### Opción A: Despliegue en una Instancia de Cómputo (OCI Compute VM) - *Nivel Gratuito de OCI (Always Free)*
 1. **Crear Instancia**:
@@ -48,8 +48,8 @@ Para cumplir con las reglas del reto, utilizaremos al menos un servicio en la nu
 
 ### Opción B: Integración de Almacenamiento (OCI Object Storage)
 Para el soporte de archivos de la empresa:
-1. Crea un **Bucket** en OCI Object Storage llamado `alura-agent-knowledge`.
-2. Genera credenciales de acceso de API de OCI (Customer Secret Key) para interactuar mediante el SDK de OCI (`@oracle/oci-sdk`) o compatibilidad con la API de Amazon S3 en el backend.
+1. Crea un **Bucket** en OCI Object Storage llamado `pegasus-agent-knowledge`.
+2. Genera credenciales de acceso de API de OCI (Customer Secret Key) para interactuar mediante el SDK de OCI (`@oracle/oci-sdk`) en el backend.
 3. El backend descargará y leerá dinámicamente los archivos de este Bucket para procesar sus contenidos y extraer los embeddings.
 
 ---
@@ -87,17 +87,21 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 -- Tabla de Conocimientos Extraídos y Embeddings (RAG)
-CREATE TABLE IF NOT EXISTS course_embeddings (
+CREATE TABLE IF NOT EXISTS document_chunks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    documento_nombre VARCHAR(150) NOT NULL, -- Nombre del archivo original (ej. manual.pdf)
-    seccion VARCHAR(200) NOT NULL, -- Apartado del archivo
-    contenido TEXT NOT NULL, -- Texto extraído
-    embedding VECTOR(1536), -- Vector de embeddings
+    documento_nombre VARCHAR(150) NOT NULL,
+    categoria VARCHAR(50) NOT NULL,
+    contenido TEXT NOT NULL,
+    ubicacion_exacta VARCHAR(200) NOT NULL,
+    autor_responsable VARCHAR(100) NOT NULL,
+    ultima_actualizacion TIMESTAMP WITH TIME ZONE NOT NULL,
+    embedding VECTOR(1536),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS course_embeddings_idx 
-ON course_embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+-- Índice optimizado HNSW para consultas de similitud de coseno vectoriales
+CREATE INDEX IF NOT EXISTS document_chunks_hnsw_idx 
+ON document_chunks USING hnsw (embedding vector_cosine_ops);
 ```
 
 ---
@@ -121,22 +125,21 @@ El servidor backend integra las siguientes librerías de Node.js para analizar d
 
 ## 🔑 5. Configuración del Archivo .env
 
-Crea el archivo `.env` en la raíz del proyecto. Asegúrate de configurar los valores de OCI y Gemini correspondientes:
+Crea el archivo `.env` en la raíz del proyecto. Asegúrate de configurar los valores correspondientes para Santos Pegasus Soluciones:
 
 ```env
 PORT=3000
 NODE_ENV=development
 
 # Base de datos PostgreSQL (local o instancia de OCI)
-DATABASE_URL="postgresql://postgres:alura_secure_pass@localhost:5432/agente_alura?schema=public&sslmode=disable"
+DATABASE_URL="postgresql://postgres:pegasus_secure_pass@localhost:5432/pegasus_db?schema=public&sslmode=disable"
 
 # Clave de API de Gemini
 GEMINI_API_KEY="AIzaSyYourSecretAPIKeyGoesHere"
-GEMINI_MODEL_NAME="gemini-2.0-flash"
 
 # OCI Object Storage (Opcional - para integración remota de archivos)
 OCI_NAMESPACE="your-oci-namespace"
-OCI_BUCKET_NAME="alura-agent-knowledge"
+OCI_BUCKET_NAME="pegasus-agent-knowledge"
 OCI_REGION="us-ashburn-1"
 ```
 
