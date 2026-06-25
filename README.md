@@ -1,40 +1,27 @@
 # Agente Alura 🤖✨
 
-Un entorno de desarrollo inteligente optimizado con habilidades personalizadas para productos de Google y automatización.
+Este repositorio está enfocado en el diseño, descripción y desarrollo del **Agente Alura** (un agente inteligente especializado para la plataforma educativa Alura).
 
 ---
 
-## 🚀 Arquitectura del Proyecto
+## 🎯 Objetivo del Proyecto
 
-Este espacio de trabajo cuenta con una integración avanzada de **habilidades del agente (Agent Skills)** basadas en las especificaciones oficiales de Google para su uso directo por el asistente.
-
-```mermaid
-graph TD
-    Workspace[Agente-Alura-Josue] --> Customizations[.agents/skills.json]
-    Customizations --> CloudSkills[skills/cloud/*]
-    Customizations --> AdsSkills[skills/ads/*]
-    CloudSkills --> GKE[Google Kubernetes Engine]
-    CloudSkills --> CloudRun[Cloud Run Basics]
-    CloudSkills --> GeminiAPI[Gemini API on Agent Platform]
-```
+El foco principal de este proyecto es definir, describir y construir un agente cognitivo capaz de integrarse con flujos de trabajo de Alura (por ejemplo, asistencia a estudiantes, recomendación de cursos, resolución de dudas o automatización de aprendizaje).
 
 ---
 
-## 🛠️ Estructura del Repositorio
+## 🛠️ Estructura y Soporte de Procesamiento
 
-- **`google-skills/`**: Copia local del repositorio oficial de habilidades de Google ([google/skills](https://github.com/google/skills)).
-- **`.agents/`**: Configuración de personalización para el agente de IA, registrando dinámicamente las habilidades como base de pensamiento y resolución de problemas.
-- **`.gitignore`**: Exclusiones de archivos del sistema e IDE para mantener el repositorio limpio.
+Para asistirnos en el desarrollo y procesamiento técnico del proyecto, hemos integrado un entorno de soporte basado en habilidades de automatización:
+
+- **Configuración del Agente Integrado (`.agents/`)**: Registra directrices para el asistente de IA durante el desarrollo.
+- **Herramientas de Soporte (`google-skills/`)**: Una base conceptual basada en las especificaciones oficiales de habilidades de Google ([google/skills](https://github.com/google/skills)). Estas habilidades sirven únicamente como referencia técnica y aceleración para tareas de infraestructura (como despliegues en la nube, bases de datos o APIs) durante la creación de nuestro agente, pero **no** representan el núcleo del proyecto.
 
 ---
 
-## 📖 Habilidades Integradas
+## 🚀 Fases del Desarrollo (Agente Alura)
 
-El agente cuenta con conocimiento experto y guías de comandos para:
-- **GenAI / Agent Platform**: Gemini API, Gemini Interactions, RAG Engine, Skill Registry.
-- **Bases de Datos & Data**: AlloyDB, BigQuery, Bigtable, Cloud SQL.
-- **Cómputo & Serverless**: Cloud Run, Kubernetes Engine (GKE) en toda su extensión (redes, costos, escalado, seguridad).
-- **Publicidad & Integración**: Google Ads API, Google Mobile Ads SDK, Interactive Media Ads (IMA).
-
-> [!TIP]
-> Cualquier habilidad agregada dentro de la carpeta `.agents/` o registrada en `skills.json` será asimilada de forma automática por el asistente en las próximas interacciones.
+1. **Definición de Requisitos**: Modelado de la personalidad, alcances y limitaciones del Agente Alura.
+2. **Arquitectura e Integraciones**: Diseño de los conectores con APIs externas, bases de datos y la plataforma Alura.
+3. **Implementación de la Lógica**: Desarrollo del motor de procesamiento cognitivo (prompt engineering, cadenas de herramientas, RAG, etc.).
+4. **Despliegue y Pruebas**: Proceso de puesta en marcha y validación del comportamiento del agente.
