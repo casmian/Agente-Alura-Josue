@@ -1,17 +1,16 @@
 import * as dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { dbQuery, isMockDatabase, mockDatabase } from '../db/client';
-import { retrieveRelevantContext } from './retrievalEngine';
+import { retrieveRelevantContext, isMockAi } from './retrievalEngine';
 import { logExecution } from '../utils/executionLogger';
 
 dotenv.config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_API_KEY) {
-  throw new Error('La variable de entorno GEMINI_API_KEY no está configurada.');
+let ai: any = null;
+if (GEMINI_API_KEY) {
+  ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 }
-
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 interface AgentResponse {
   reply: string;
@@ -168,6 +167,47 @@ REGLAS DE GENERACIÓN Y CONTROL DE ALUCINACIONES:
 4. Al final de tu respuesta, debes incluir una sección titulada "### Referencias Utilizadas" listando de forma ordenada cada archivo, sección/página y responsable citado.
    Formato de referencia:
    - *Documento*: [Nombre del archivo] | *Ubicación*: [Ubicación exacta] | *Responsable*: [Autor responsable] | *Actualizado*: [Fecha de modificación]`;
+
+  // Fallback en Modo de Simulación de IA (sin API key de Gemini)
+  if (isMockAi) {
+    console.log('[Orchestrator Mock] Generando respuesta local basada en el contexto...');
+    
+    // Extraer citas estructuradas
+    const refLines = context.split(/\[FUENTE DE CONOCIMIENTO #\d+\]/).filter(b => b.trim().length > 0).map(cBlock => {
+      const docMatch = cBlock.match(/- Archivo: (.*)/);
+      const locMatch = cBlock.match(/- Ubicación Exacta: (.*)/);
+      const ownerMatch = cBlock.match(/- Responsable: (.*)/);
+      const dateMatch = cBlock.match(/- Última Actualización: (.*)/);
+      
+      if (docMatch && locMatch) {
+        return `- *Documento*: ${docMatch[1].trim()} | *Ubicación*: ${locMatch[1].trim()} | *Responsable*: ${ownerMatch ? ownerMatch[1].trim() : 'Comité'} | *Actualizado*: ${dateMatch ? dateMatch[1].trim() : 'Reciente'}`;
+      }
+      return '';
+    }).filter(r => r.length > 0);
+
+    const replyText = `🤖 **[MODO SIMULACIÓN LOCAL]**
+
+He extraído la siguiente información directamente de los documentos del proyecto para responder a tu pregunta:
+
+${context.replace(/\[FUENTE DE CONOCIMIENTO #\d+\]/g, '---').trim()}
+
+### Referencias Utilizadas
+${refLines.join('\n')}`;
+
+    await saveMessage(activeChatId, 'model', replyText);
+    
+    const latencyMs = Date.now() - startTime;
+    logExecution({
+      timestamp: new Date().toISOString(),
+      chatId: activeChatId,
+      query: userMessage,
+      context,
+      response: replyText,
+      latencyMs
+    });
+
+    return { reply: replyText, chatId: activeChatId };
+  }
 
   // 7. Preparar la entrada del modelo compilando el historial y el contexto
   const formattedPrompt = `Pregunta actual del colaborador: "${userMessage}"

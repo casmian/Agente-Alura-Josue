@@ -8,11 +8,16 @@ import * as path from 'path';
 dotenv.config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_API_KEY) {
-  throw new Error('La variable de entorno GEMINI_API_KEY no está configurada.');
-}
+export let isMockAi = false;
+let ai: any = null;
 
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+if (!GEMINI_API_KEY) {
+  console.warn('\n⚠️  [IA] La clave GEMINI_API_KEY no está configurada.');
+  console.warn('⚠️  [IA] El servidor operará en MODO SIMULACIÓN DE IA (respuestas locales simuladas).\n');
+  isMockAi = true;
+} else {
+  ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+}
 
 export interface RetrievedChunk {
   id: string;
@@ -47,6 +52,10 @@ function getDocumentOwner(category: string): string {
  * Genera el vector embedding de la pregunta del usuario
  */
 async function generateQueryEmbedding(query: string): Promise<number[]> {
+  if (isMockAi) {
+    return new Array(1536).fill(0);
+  }
+
   try {
     const response = await ai.models.embedContent({
       model: 'text-embedding-004',
@@ -70,6 +79,20 @@ async function generateQueryEmbedding(query: string): Promise<number[]> {
 async function rerankCandidates(query: string, candidates: RetrievedChunk[]): Promise<RetrievedChunk[]> {
   if (candidates.length === 0) return [];
   
+  if (isMockAi) {
+    console.log('[Reranker Mock] Calificando fragmentos por coincidencia de palabras clave...');
+    candidates.forEach(c => {
+      // Puntuación simple basada en palabras clave
+      const matchWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      let matches = 0;
+      matchWords.forEach(word => {
+        if (c.contenido.toLowerCase().includes(word)) matches++;
+      });
+      c.score = matches > 0 ? Math.min(5 + matches, 10) : 4;
+    });
+    return candidates.sort((a, b) => (b.score || 0) - (a.score || 0));
+  }
+
   // Si solo hay un candidato, no es necesario re-clasificar
   if (candidates.length === 1) {
     candidates[0].score = 10;
