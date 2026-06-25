@@ -1,215 +1,171 @@
-# Manual de Configuración del Entorno de Desarrollo (Nivel Empresarial) 🛠️🚀
+# Manual de Configuración del Entorno de Desarrollo y Despliegue en OCI 🛠️🚀
 
-Este manual contiene las instrucciones detalladas para desplegar de forma local y segura el proyecto del **Agente Alura**. Está diseñado para cubrir múltiples sistemas operativos y entornos virtuales, garantizando una configuración homogénea para todo el equipo.
+Este manual contiene las instrucciones detalladas para desplegar de forma local y en la nube de **Oracle Cloud Infrastructure (OCI)** el proyecto del **Agente Alura**.
 
 ---
 
 ## 📋 1. Requisitos Previos Generales
 
-Antes de iniciar la instalación de dependencias, asegúrate de tener configurados los siguientes componentes:
+Antes de iniciar la instalación, asegúrate de tener configurados los siguientes componentes:
 
 ### A. Entorno de Ejecución (Node.js)
 - **Versión requerida**: Node.js v20.x LTS o superior.
-- **Gestor de paquetes**: npm v10.x o superior (incluido con Node.js).
-- *Recomendación*: Utilizar un gestor de versiones como `nvm` (Node Version Manager) para evitar conflictos:
-  ```bash
-  # Instalar Node.js v20 LTS usando nvm
-  nvm install 20
-  nvm use 20
-  ```
+- **Gestor de versiones recomendado**: `nvm` (Node Version Manager).
 
-### B. Sistema Gestor de Base de Datos (PostgreSQL)
-- **Versión requerida**: PostgreSQL v15 o v16.
-- **Extensión obligatoria**: `pgvector` (para almacenamiento y búsqueda de embeddings de vectores).
-- **Opción Recomendada (Docker)**: La forma más rápida de ejecutar PostgreSQL con la extensión vector preconfigurada es mediante Docker:
+### B. Sistema Gestor de Base de Datos
+- **Opción Local**: Docker con PostgreSQL y `pgvector`:
   ```bash
-  # Descargar e iniciar la imagen oficial de pgvector
   docker run --name pg-agente-alura -e POSTGRES_PASSWORD=alura_secure_pass -e POSTGRES_DB=agente_alura -p 5432:5432 -d ankane/pgvector:v0.5.1
   ```
+- **Opción Nube (OCI)**: Base de datos **OCI PostgreSQL** administrada o ejecutada dentro de un contenedor en OCI Compute.
 
 ---
 
-## 💻 2. Guía de Configuración por Sistema Operativo
+## ☁️ 2. Guía de Despliegue en Oracle Cloud Infrastructure (OCI)
 
-### Windows (Instalación Nativa)
-1. Instala Node.js desde el instalador oficial `.msi`.
-2. Si prefieres PostgreSQL nativo en lugar de Docker:
-   - Descarga PostgreSQL de [EnterpriseDB](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads).
-   - Descarga los binarios de `pgvector` desde su repositorio de GitHub y copia el archivo `vector.dll` en la carpeta `lib/` de PostgreSQL y los scripts `.sql` asociados en `share/extension/`.
-3. Asegúrate de configurar las variables de entorno de Windows agregando la ruta de instalación de PostgreSQL al `PATH` del sistema (ej. `C:\Program Files\PostgreSQL\16\bin`).
+Para cumplir con las reglas del reto, utilizaremos al menos un servicio en la nube de OCI. A continuación se detalla la configuración recomendada:
 
-### macOS (Homebrew)
-1. Instala Node.js y PostgreSQL mediante Homebrew:
-   ```bash
-   brew install node@20 postgresql@15
-   ```
-2. Instala la extensión `pgvector`:
-   ```bash
-   brew install pgvector
-   ```
-3. Inicia el servicio de base de datos local:
-   ```bash
-   brew services start postgresql@15
-   ```
+### Opción A: Despliegue en una Instancia de Cómputo (OCI Compute VM) - *Nivel Gratuito de OCI (Always Free)*
+1. **Crear Instancia**:
+   - Ve a la consola de OCI y crea una instancia de cómputo VM (recomendado: Ubuntu Server o Oracle Linux).
+   - Descarga la clave SSH de acceso.
+2. **Configurar Red Virtual (VCN)**:
+   - En las Listas de Seguridad de tu VCN, añade una **regla de ingreso** para habilitar el puerto de la aplicación (ejemplo: puerto `80` o `3000` para Express/Vite) permitiendo tráfico desde `0.0.0.0/0`.
+3. **Conexión e Instalación**:
+   - Conéctate por SSH a la máquina:
+     ```bash
+     ssh -i <clave_privada> ubuntu@<IP_PÚBLICA_OCI>
+     ```
+   - Instala Node.js, Git y Docker en la máquina de OCI.
+4. **Despliegue del Proyecto**:
+   - Clona el repositorio público de GitHub en la VM.
+   - Crea el archivo `.env` en la máquina con tus credenciales de base de datos y la clave `GEMINI_API_KEY`.
+   - Inicia los servicios con un manejador de procesos como `pm2` para mantener la ejecución en segundo plano:
+     ```bash
+     sudo npm install pm2 -g
+     pm2 start dist/server/index.js --name "agente-alura"
+     ```
 
-### Linux (Ubuntu/Debian)
-1. Instala Node.js:
-   ```bash
-   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-   sudo apt-get install -y nodejs
-   ```
-2. Instala PostgreSQL y sus herramientas de desarrollo:
-   ```bash
-   sudo apt-get install -y postgresql postgresql-server-dev-all
-   ```
-3. Compila e instala `pgvector`:
-   ```bash
-   git clone https://github.com/pgvector/pgvector.git
-   cd pgvector
-   make
-   sudo make install
-   ```
+### Opción B: Integración de Almacenamiento (OCI Object Storage)
+Para el soporte de archivos de la empresa:
+1. Crea un **Bucket** en OCI Object Storage llamado `alura-agent-knowledge`.
+2. Genera credenciales de acceso de API de OCI (Customer Secret Key) para interactuar mediante el SDK de OCI (`@oracle/oci-sdk`) o compatibilidad con la API de Amazon S3 en el backend.
+3. El backend descargará y leerá dinámicamente los archivos de este Bucket para procesar sus contenidos y extraer los embeddings.
 
 ---
 
 ## 🗄️ 3. Estructura del Esquema de Base de Datos (SQL)
 
-La base de datos del Agente Alura se compone de cuatro tablas principales. El script de inicialización (`npm run db:migrate`) ejecutará el siguiente modelo relacional en PostgreSQL:
+Ejecuta el script de migración (`npm run db:migrate`) para crear la base de datos relacional y vectorial en PostgreSQL:
 
 ```sql
--- Habilitar la extensión para manejo de vectores
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- 1. Tabla de Usuarios (Estudiantes de Alura)
+-- Tabla de Usuarios (Colaboradores)
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
-    rol VARCHAR(30) DEFAULT 'student', -- 'student', 'admin', 'moderator'
-    progreso_tecnologico JSONB, -- Historial de cursos y tecnologías finalizados
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Tabla de Sesiones de Conversación
+-- Tabla de Sesiones de Chat
 CREATE TABLE IF NOT EXISTS chats (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     titulo VARCHAR(200) DEFAULT 'Nueva Conversación',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Tabla de Mensajes del Historial de Chat
+-- Tabla de Mensajes
 CREATE TABLE IF NOT EXISTS messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     chat_id UUID REFERENCES chats(id) ON DELETE CASCADE,
-    role VARCHAR(20) NOT NULL, -- 'user', 'model', 'system'
+    role VARCHAR(20) NOT NULL, -- 'user', 'model'
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Tabla de Conocimientos y Embeddings (RAG)
+-- Tabla de Conocimientos Extraídos y Embeddings (RAG)
 CREATE TABLE IF NOT EXISTS course_embeddings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    curso_nombre VARCHAR(150) NOT NULL,
-    clase_titulo VARCHAR(200) NOT NULL,
-    url_fuente VARCHAR(255),
-    contenido TEXT NOT NULL,
-    embedding VECTOR(1536), -- Vector de 1536 dimensiones para embeddings de Gemini/OpenAI
+    documento_nombre VARCHAR(150) NOT NULL, -- Nombre del archivo original (ej. manual.pdf)
+    seccion VARCHAR(200) NOT NULL, -- Apartado del archivo
+    contenido TEXT NOT NULL, -- Texto extraído
+    embedding VECTOR(1536), -- Vector de embeddings
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Crear un índice IVFFlat para acelerar búsquedas vectoriales por similitud de coseno
 CREATE INDEX IF NOT EXISTS course_embeddings_idx 
 ON course_embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 ```
 
 ---
 
-## 🔑 4. Configuración de Variables de Entorno (.env)
+## 📁 4. Tubería de Procesamiento de Documentos Multiformato
 
-Crea el archivo `.env` en la raíz del proyecto. Asegúrate de configurar los valores de producción y desarrollo según corresponda:
+El servidor backend integra las siguientes librerías de Node.js para analizar dinámicamente los archivos en memoria o descargados de OCI Object Storage:
+
+| Formato | Extensión | Librería de Ingesta y Extracción de Texto |
+| :--- | :--- | :--- |
+| **PDF** | `.pdf` | `pdf-parse` (extrae texto y número de página) |
+| **Word** | `.docx` | `mammoth` (convierte DOCX a texto limpio o HTML) |
+| **Excel** | `.xlsx`, `.xls` | `xlsx` / SheetJS (lee celdas, filas y las convierte a JSON/CSV) |
+| **PowerPoint** | `.pptx` | `officeparser` (analiza las diapositivas de texto) |
+| **Markdown** | `.md` | Lectura directa de texto UTF-8 |
+| **CSV** | `.csv` | `csv-parser` o parseador de cadenas nativo |
+| **JSON** | `.json` | `JSON.parse` estructurado |
+| **HTML** | `.html` | `cheerio` (para limpiar etiquetas y extraer contenido de texto) |
+
+---
+
+## 🔑 5. Configuración del Archivo .env
+
+Crea el archivo `.env` en la raíz del proyecto. Asegúrate de configurar los valores de OCI y Gemini correspondientes:
 
 ```env
-# ==========================================
-# CONFIGURACIÓN DEL SERVIDOR BACKEND
-# ==========================================
 PORT=3000
-NODE_ENV=development # 'development', 'production', 'test'
-LOG_LEVEL=debug # 'debug', 'info', 'warn', 'error'
+NODE_ENV=development
 
-# ==========================================
-# CONEXIÓN DE BASE DE DATOS (POSTGRESQL)
-# ==========================================
-# Ajusta el usuario, contraseña, host y base de datos según tu instalación local
+# Base de datos PostgreSQL (local o instancia de OCI)
 DATABASE_URL="postgresql://postgres:alura_secure_pass@localhost:5432/agente_alura?schema=public&sslmode=disable"
-DB_POOL_MIN=2
-DB_POOL_MAX=10
 
-# ==========================================
-# INTEGRACIÓN CON INTELIGENCIA ARTIFICIAL (GEMINI)
-# ==========================================
-# Obtén tu clave en Google AI Studio o Vertex AI Console
+# Clave de API de Gemini
 GEMINI_API_KEY="AIzaSyYourSecretAPIKeyGoesHere"
-GEMINI_MODEL_NAME="gemini-2.0-flash" # Modelo recomendado para chat rápido y herramientas
-GEMINI_TEMPERATURE=0.2 # Valor bajo para respuestas precisas y socráticas
+GEMINI_MODEL_NAME="gemini-2.0-flash"
+
+# OCI Object Storage (Opcional - para integración remota de archivos)
+OCI_NAMESPACE="your-oci-namespace"
+OCI_BUCKET_NAME="alura-agent-knowledge"
+OCI_REGION="us-ashburn-1"
 ```
 
 ---
 
-## 🚀 5. Comandos de Ejecución y Despliegue
-
-Instala las dependencias y prepara el entorno con los siguientes comandos:
+## 🏃 6. Comandos de Ejecución y Despliegue
 
 ```bash
-# 1. Instalar paquetes de producción y desarrollo
+# 1. Instalar dependencias
 npm install
 
-# 2. Correr migraciones de base de datos (creación de tablas e índices)
+# 2. Correr migraciones de base de datos
 npm run db:migrate
 
-# 3. Poblar la base de datos con los datos de conocimiento RAG (CSV Seeds)
+# 3. Poblar RAG con archivos de prueba locales
 npm run db:seed
 
-# 4. Iniciar la aplicación en modo desarrollo (Hot-Reload activo)
+# 4. Iniciar en modo desarrollo
 npm run dev
-
-# 5. Compilar la aplicación para producción (TypeScript a JavaScript puro y empaquetado Vite)
-npm run build
-
-# 6. Iniciar el servidor compilado en producción
-npm run start
 ```
 
 ---
 
-## 🔍 6. Sección de Diagnóstico y Resolución de Problemas (Troubleshooting)
-
-### Error A: `Database connection timed out` o `ECONNREFUSED`
-* **Causa**: El servidor PostgreSQL no se está ejecutando o el host/puerto en `DATABASE_URL` es incorrecto.
+## 🔍 7. Diagnóstico de Despliegue en OCI
+* **Fallo**: No puedo acceder al chat desde internet usando la IP pública de OCI.
 * **Solución**:
-  1. Verifica que el contenedor de Docker esté activo con `docker ps`. Si no está activo, inícialo con `docker start pg-agente-alura`.
-  2. Si PostgreSQL es nativo, confirma que el servicio esté corriendo en el puerto `5432` con `pg_isready` (en macOS/Linux) o abriendo el Administrador de Servicios (en Windows).
-
-### Error B: `extension "vector" is not available` o `could not open extension control file`
-* **Causa**: PostgreSQL se está ejecutando, pero la extensión `pgvector` no se instaló correctamente en el sistema.
-* **Solución**:
-  1. Si usas Docker, asegúrate de estar utilizando la imagen `ankane/pgvector` en lugar de la imagen oficial básica de Postgres.
-  2. Si es una instalación nativa, repite el proceso de compilación y copia del archivo `.dll` o `.so` en las carpetas correspondientes de PostgreSQL.
-
-### Error C: `API key not found` o `403 Forbidden` al invocar a Gemini
-* **Causa**: La variable `GEMINI_API_KEY` en el archivo `.env` está vacía, contiene espacios o la clave de API ha expirado.
-* **Solución**:
-  1. Verifica que no haya comillas o espacios extras alrededor de la API key en tu archivo `.env`.
-  2. Haz una prueba curl directa para descartar bloqueos de red corporativos:
+  1. Revisa que el puerto esté abierto en el Firewall interno de Linux de tu VM:
      ```bash
-     curl -H "Content-Type: application/json" -d "{'contents':[{'parts':[{'text':'Hola'}]}]}" "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=TU_API_KEY"
+     sudo ufw allow 3000/tcp
+     sudo ufw reload
      ```
-
-### Error D: `Port 3000 is already in use`
-* **Causa**: Otro proceso del sistema está utilizando el puerto del backend.
-* **Solución**:
-  - Cambia el puerto en tu archivo `.env` (ej. `PORT=3001`).
-  - O busca y finaliza el proceso que bloquea el puerto:
-    - *Windows*: `netstat -ano | findstr :3000` y luego `taskkill /PID <PID_PROCESO> /F`.
-    - *macOS/Linux*: `lsof -i :3000` y luego `kill -9 <PID>`.
+  2. Confirma en la consola web de OCI que la **Lista de Seguridad** de la subred tenga una regla de entrada (Ingress Rule) activa para el puerto `3000` desde la dirección fuente `0.0.0.0/0`.

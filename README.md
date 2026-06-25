@@ -1,91 +1,59 @@
-# Agente Alura: Plataforma de Mentoría y Onboarding Inteligente 🤖📚
+# Agente Alura: Ecosistema Corporativo de Onboarding y Mentoría 🤖📚
 
-**Agente Alura** es un ecosistema cognitivo de nivel empresarial diseñado para integrarse con la plataforma educativa Alura. Su propósito principal es actuar como un mentor y tutor interactivo para desarrolladores junior y estudiantes, guiándolos durante su proceso de aprendizaje y sus primeras contribuciones en el código.
-
-A través de capacidades de procesamiento de lenguaje natural de última generación, recuperación semántica de datos (RAG) y ejecución segura de herramientas, el Agente Alura simula la interacción con un desarrollador líder o tutor socrático para guiar a los usuarios hacia el éxito sin darles directamente las respuestas.
+**Agente Alura** es un asistente cognitivo inteligente de nivel empresarial diseñado para interactuar con los colaboradores de una organización. Su objetivo principal es resolver dudas y consultas en tiempo real actuando como un mentor técnico con base en la documentación interna de la empresa.
 
 ---
 
-## 🎯 Misión y Visión del Proyecto
+## 🎯 Objetivo y Alcance del Proyecto
 
-### Misión
-Acelerar la curva de aprendizaje de los programadores junior y estudiantes mediante una mentoría personalizada e interactiva disponible 24/7, garantizando que entiendan la arquitectura del software, sigan las mejores prácticas y aprendan a depurar problemas de forma autónoma.
+Desarrollar un agente de inteligencia artificial corporativo, accesible para todos los colaboradores de forma abierta, capaz de responder preguntas con base en documentos internos en múltiples formatos (desde guías de estilo y configuraciones de desarrollo hasta hojas de cálculo de módulos).
 
-### Visión
-Convertirse en el estándar de mentoría digital para plataformas educativas de programación, donde la inteligencia artificial asista no solo en la resolución de dudas teóricas, sino en la validación práctica de código y la recomendación predictiva de trayectorias de carrera tecnológica.
-
----
-
-## 🛠️ Capacidades Clave del Agente (Reglamento Operativo)
-
-De acuerdo con las directrices académicas e institucionales de Alura, el agente debe operar bajo los siguientes cuatro pilares funcionales:
-
-### 1. Tutor de Programación Interactivo (Método Socrático)
-* **Desglose de Conceptos Complejos**: Explicar conceptos de software abstractos (inyección de dependencias, concurrencia, normalización de bases de datos, closures, etc.) usando analogías y ejemplos visuales adaptados al nivel del usuario.
-* **Evaluación de Código Estructural**: Analizar fragmentos de código proporcionados por el estudiante para identificar errores de sintaxis, cuellos de botella de rendimiento y malas prácticas.
-* **Guía en lugar de Respuestas**: En lugar de reescribir el código corregido para el estudiante, el agente señala el error lógico y hace preguntas guía para que el estudiante aprenda a resolver el problema por sí mismo.
-* **Generación de Retos Técnicos**: Crear ejercicios prácticos personalizados de código basados en el tema que el alumno está estudiando actualmente.
-
-### 2. Recomendador Dinámico de Rutas de Aprendizaje
-* **Análisis de Perfil Cognitivo**: Analizar de manera inteligente el historial de cursos completados por el alumno, su tiempo promedio de estudio y el área tecnológica de su interés (Frontend, Backend, Cloud, Data Science).
-* **Predicción de Trayectoria de Carrera**: Recomendar los siguientes pasos específicos dentro del catálogo de cursos de Alura para ayudar al estudiante a alcanzar sus metas profesionales.
-
-### 3. Compañero de Consultas y RAG (Retrieval-Augmented Generation)
-* **Búsqueda Semántica Local**: Acceder a una base de conocimientos vectorizada que contiene transcripciones de clases, artículos técnicos oficiales de Alura y preguntas recurrentes del foro comunitario.
-* **Trazabilidad de Fuentes**: Cada respuesta académica dada por el agente debe incluir la clase, video o artículo específico de Alura de donde se extrajo la información, asegurando transparencia y confianza.
-
-### 4. Sandbox de Ejecución y Herramientas (Function Calling)
-* **Búsqueda Web Segura**: Realizar consultas filtradas mediante APIs de búsqueda (ej. Google Search) únicamente para recuperar documentación oficial y actualizada sobre librerías o frameworks (ej. MDN, npm, PyPI).
-* **Compilación y Validación Interactiva**: Ejecutar pequeñas piezas de código de forma aislada y segura para demostrar comportamientos lógicos al usuario.
+### 📄 Formatos de Archivos Soportados
+El motor de ingesta del agente cuenta con lectores especializados para procesar:
+- **Documentos de Texto**: PDF (`.pdf`), Word (`.docx`), Markdown (`.md`), HTML (`.html`).
+- **Hojas de Cálculo y Estructuras**: Excel (`.xlsx`), CSV (`.csv`), JSON (`.json`).
+- **Presentaciones**: PowerPoint (`.pptx`).
 
 ---
 
-## 🚀 Arquitectura Detallada del Sistema
+## ☁️ Arquitectura e Infraestructura de Nube (OCI)
 
-El Agente Alura se compone de una arquitectura desacoplada de tres capas de nivel empresarial:
+Para cumplir con las especificaciones de despliegue del reto, el proyecto utiliza la nube de **Oracle Cloud Infrastructure (OCI)**:
 
 ```mermaid
 graph TD
-    subgraph Capa de Presentación
-        UI[React SPA + TypeScript] -->|Estilos Puros| CSS[Vanilla CSS Design System]
-    end
-
-    subgraph Capa de Orquestación y Lógica
-        Server[Express Server + TypeScript] <-->|Google Gen AI SDK| Gemini[Gemini 1.5 Pro / 2.0]
-        Server -->|Logging y Métricas| Logger[Winston Logger]
-    end
-
-    subgraph Capa de Datos e Indexación
-        DB[(PostgreSQL Database)] <-->|Búsqueda Vectorial| PgVector[pgvector Extension]
-    end
-
-    UI <-->|API REST / WebSockets| Server
+    User[Colaborador / Navegador] <-->|HTTPS| LoadBalancer[OCI Load Balancer / API Gateway]
+    LoadBalancer <-->|Node.js Backend| OCI_VM[OCI Compute Instance VM]
+    OCI_VM <-->|Google Gen AI SDK| Gemini[Gemini API]
+    OCI_VM <-->|Búsqueda Semántica RAG| DB[(OCI Database with PostgreSQL)]
+    OCI_VM <-->|Almacenamiento de Documentos| ObjectStorage[OCI Object Storage]
 ```
 
-### 1. Capa de Presentación (Frontend)
-Construida en **React con Vite y TypeScript** para asegurar un rendimiento de renderizado instantáneo. Los componentes visuales (ventanas de chat, burbujas de mensajes, bloques de código interactivos) se estilizan exclusivamente con **Vanilla CSS**, garantizando transiciones suaves, soporte de tema oscuro de alta calidad y un diseño responsivo adaptado a dispositivos móviles y de escritorio.
-
-### 2. Capa de Orquestación y Lógica (Backend)
-Servidor basado en **Node.js y Express (TypeScript)** que administra el flujo de conversación, la persistencia de las sesiones y la inicialización de herramientas. La comunicación con la IA se realiza de manera nativa mediante el **Google Gen AI SDK (`@google/genai`)**, lo que permite:
-* Integrar historial conversacional mediante estructuras de memoria a corto plazo.
-* Ejecutar llamadas a funciones (*Function Calling*) estructuradas.
-* Realizar consultas semánticas precisas.
-
-### 3. Capa de Persistencia e Indexación (Datos)
-Motor de base de datos **PostgreSQL** con la extensión **`pgvector`**. Esta base almacena el historial persistente de conversaciones de los alumnos, sus perfiles y las representaciones vectoriales (embeddings de 1536 dimensiones) de los documentos de conocimiento del proyecto.
+### Servicios de OCI Utilizados:
+1. **OCI Compute (Virtual Machine)**: Instancia de cómputo en la nube (Ubuntu/Oracle Linux) encargada de hospedar el backend en Node.js y servir la aplicación web de React.
+2. **OCI Object Storage**: Repositorio de almacenamiento de objetos donde se cargan y guardan los archivos originales (PDF, Word, CSV, etc.) subidos por la empresa, sirviendo como el "Data Lake" de conocimientos del agente.
+3. **OCI PostgreSQL (Base de Datos)**: Base de datos relacional administrada para almacenar usuarios, sesiones de chat e indexar embeddings vectoriales mediante la extensión `pgvector`.
 
 ---
 
-## 📁 Organización del Repositorio
+## 🤖 Capacidades Clave del Agente (Reglamento Operativo)
 
-A continuación se detalla la estructura física de directorios del proyecto:
+1. **Tutor de Programación e Integración (Onboarding)**:
+   - Explicar arquitecturas de código complejas y guiar de forma socrática a los nuevos programadores.
+   - Evaluar código proporcionado de forma constructiva sin resolverlo directamente.
+2. **Consultor RAG Multiformato**:
+   - Extraer y vectorizar información de archivos PDF, Excel, Word, etc., cargados en OCI Object Storage.
+   - Generar respuestas detalladas citando explícitamente el nombre del archivo y la sección de donde se obtuvo la respuesta.
+3. **Sandbox y Herramientas (Function Calling)**:
+   - Integración segura con Google Search para corroborar sintaxis de APIs.
 
-* **`.agents/`**: Directorio de personalización del agente.
-  - [`AGENTS.md`](file:///c:/Users/NeoUniverse/Agente-Alura/.agents/AGENTS.md): Reglas de desarrollo y restricciones tecnológicas para el asistente de IA.
-  - [`skills.json`](file:///c:/Users/NeoUniverse/Agente-Alura/.agents/skills.json): Configuración de importación de habilidades de desarrollo.
-* **`google-skills/`**: Habilidades y guías técnicas clonadas del repositorio oficial de Google como soporte de procesamiento e infraestructura en la nube.
-* **`knowledge-base/`**: Base de conocimientos utilizada por el motor RAG del agente.
-  - [`configuracion_entorno.md`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/configuracion_entorno.md): Manual paso a paso para desplegar el proyecto localmente.
-  - [`guia_estilo.md`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/guia_estilo.md): Normas de desarrollo, TypeScript, Conventional Commits y UI/UX.
-  - [`mapa_modulos.csv`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/mapa_modulos.csv): Mapa tabular con las responsabilidades del código y sus respectivos tests.
-* **`.gitignore`**: Configuración de exclusiones del sistema, dependencias de Node.js e IDEs.
+---
+
+## 📁 Estructura del Repositorio
+
+* **`.agents/`**: Reglas de desarrollo e importación de habilidades para el asistente de IA.
+* **`google-skills/`**: Habilidades clonadas de Google como soporte de procesamiento e infraestructura.
+* **`knowledge-base/`**: Documentación cargada por defecto para simular el onboarding técnico:
+  - [`configuracion_entorno.md`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/configuracion_entorno.md): Manual paso a paso de desarrollo local.
+  - [`guia_estilo.md`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/guia_estilo.md): Guías de TypeScript, Git, Commits y Vanilla CSS.
+  - [`mapa_modulos.csv`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/mapa_modulos.csv): Base de datos en formato CSV de la arquitectura de la aplicación.
