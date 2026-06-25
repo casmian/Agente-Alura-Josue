@@ -1,6 +1,9 @@
 import * as dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
-import { dbQuery } from '../db/client';
+import { dbQuery, isMockDatabase } from '../db/client';
+import { parseDocumentToSegments } from './documentParser';
+import * as fs from 'fs';
+import * as path from 'path';
 
 dotenv.config();
 
@@ -21,6 +24,23 @@ export interface RetrievedChunk {
   ultima_actualizacion: Date;
   similitud: number;
   score?: number; // Para el Reranker
+}
+
+function getDocumentCategory(fileName: string): string {
+  const lowerName = fileName.toLowerCase();
+  if (lowerName.includes('entorno') || lowerName.includes('configuracion')) return 'Entorno';
+  if (lowerName.includes('estilo') || lowerName.includes('practicas')) return 'Estilo';
+  if (lowerName.includes('modulo') || lowerName.includes('arquitectura')) return 'Arquitectura';
+  return 'General';
+}
+
+function getDocumentOwner(category: string): string {
+  switch (category) {
+    case 'Entorno': return 'DevOps Lead / Tech Lead';
+    case 'Estilo': return 'Frontend & Backend Leads';
+    case 'Arquitectura': return 'Software Architect';
+    default: return 'Comité de Documentación Corporativa';
+  }
 }
 
 /**
@@ -170,7 +190,47 @@ export async function retrieveRelevantContext(
   limitCandidates: number = 10,
   limitFinal: number = 3
 ): Promise<string> {
-  
+  // 1. Fallback en Modo Mock (sin base de datos PostgreSQL)
+  if (isMockDatabase) {
+    console.log('[RAG] Ejecutando búsqueda semántica local desde archivos de knowledge-base...');
+    const kbDir = path.join(__dirname, '..', '..', 'knowledge-base');
+    const candidates: RetrievedChunk[] = [];
+    
+    if (fs.existsSync(kbDir)) {
+      const files = fs.readdirSync(kbDir);
+      for (const file of files) {
+        const category = getDocumentCategory(file);
+        if (categoryFilter && category !== categoryFilter) continue;
+        
+        const filePath = path.join(kbDir, file);
+        try {
+          const segments = await parseDocumentToSegments(filePath);
+          const fileStats = fs.statSync(filePath);
+          
+          for (const segment of segments) {
+            candidates.push({
+              id: Math.random().toString(),
+              documento_nombre: file,
+              categoria: category,
+              contenido: segment.content,
+              ubicacion_exacta: segment.location,
+              autor_responsable: getDocumentOwner(category),
+              ultima_actualizacion: fileStats.mtime,
+              similitud: 1.0 // Gemini Flash Reranker calificará la similitud real
+            });
+          }
+        } catch (e) {
+          console.error(`[RAG Mock] Error leyendo ${file}:`, e);
+        }
+      }
+    }
+
+    if (candidates.length === 0) return '';
+    const rerankedChunks = await rerankCandidates(query, candidates);
+    const finalChunks = rerankedChunks.slice(0, limitFinal);
+    return assembleContextBlock(finalChunks);
+  }
+
   // 1. Convertir pregunta del colaborador en vector embedding
   const queryVector = await generateQueryEmbedding(query);
   const vectorString = `[${queryVector.join(',')}]`;

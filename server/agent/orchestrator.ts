@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
-import { dbQuery } from '../db/client';
+import { dbQuery, isMockDatabase, mockDatabase } from '../db/client';
 import { retrieveRelevantContext } from './retrievalEngine';
 import { logExecution } from '../utils/executionLogger';
 
@@ -22,6 +22,12 @@ interface AgentResponse {
  * Recupera el historial de chat guardado en PostgreSQL
  */
 async function fetchChatHistory(chatId: string): Promise<{ role: string; content: string }[]> {
+  if (isMockDatabase) {
+    return mockDatabase.messages
+      .filter(msg => msg.chatId === chatId)
+      .map(msg => ({ role: msg.role, content: msg.content }));
+  }
+
   try {
     const res = await dbQuery(
       `SELECT role, content 
@@ -44,6 +50,11 @@ async function fetchChatHistory(chatId: string): Promise<{ role: string; content
  * Guarda un mensaje individual en la base de datos PostgreSQL
  */
 async function saveMessage(chatId: string, role: 'user' | 'model', content: string): Promise<void> {
+  if (isMockDatabase) {
+    mockDatabase.messages.push({ chatId, role, content, created_at: new Date() });
+    return;
+  }
+
   try {
     await dbQuery(
       `INSERT INTO messages (chat_id, role, content) 
@@ -59,6 +70,12 @@ async function saveMessage(chatId: string, role: 'user' | 'model', content: stri
  * Crea una nueva sesión de chat en la base de datos
  */
 async function createNewChatSession(userId: string, title: string = 'Nueva Consulta'): Promise<string> {
+  if (isMockDatabase) {
+    const newId = `mock-chat-${Math.random().toString(36).substring(2, 10)}`;
+    mockDatabase.chats.push({ id: newId, user_id: userId, titulo: title, created_at: new Date() });
+    return newId;
+  }
+
   try {
     // Si no hay usuarios en la BD, creamos un usuario por defecto
     const userCheck = await dbQuery('SELECT id FROM users LIMIT 1');
