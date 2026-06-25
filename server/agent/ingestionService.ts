@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { dbQuery, dbPool } from '../db/client';
-import { extractTextFromFile } from './documentParser';
+import { parseDocumentToSegments, DocumentSegment, cleanTextContent } from './documentParser';
 
 dotenv.config();
 
@@ -17,16 +17,21 @@ if (!GEMINI_API_KEY) {
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 /**
- * Divide un texto plano en fragmentos (chunks) más pequeños con solapamiento (overlap)
+ * En caso de que un segmento extraído (por ejemplo, una página PDF muy larga)
+ * exceda el límite de caracteres sugerido para un embedding de calidad,
+ * este helper subdivide el segmento manteniendo su metadato de ubicación.
  */
-function chunkText(text: string, chunkSize: number = 1000, overlap: number = 150): string[] {
-  const chunks: string[] = [];
+function subChunkSegment(text: string, maxChunkSize: number = 1000, overlap: number = 150): string[] {
+  if (text.length <= maxChunkSize) {
+    return [text];
+  }
+  
+  const subChunks: string[] = [];
   let currentIndex = 0;
   
   while (currentIndex < text.length) {
-    let endIndex = currentIndex + chunkSize;
+    let endIndex = currentIndex + maxChunkSize;
     
-    // Si no estamos al final del texto, intentar cortar en un espacio en blanco o salto de línea
     if (endIndex < text.length) {
       const lastSpace = text.lastIndexOf(' ', endIndex);
       if (lastSpace > currentIndex) {
@@ -34,39 +39,18 @@ function chunkText(text: string, chunkSize: number = 1000, overlap: number = 150
       }
     }
     
-    const chunk = text.substring(currentIndex, endIndex).trim();
-    if (chunk.length > 0) {
-      chunks.push(chunk);
+    const subChunk = text.substring(currentIndex, endIndex).trim();
+    if (subChunk.length > 0) {
+      subChunks.push(subChunk);
     }
     
     currentIndex = endIndex - overlap;
-    if (currentIndex >= text.length || chunkSize <= overlap) {
+    if (currentIndex >= text.length || maxChunkSize <= overlap) {
       break;
     }
   }
   
-  return chunks;
-}
-
-/**
- * Procesa un archivo CSV y genera fragmentos agrupados por registros (filas) para preservar su estructura tabular
- */
-function chunkCsvText(csvText: string, rowsPerChunk: number = 5): string[] {
-  const lines = csvText.split('\n').filter(line => line.trim().length > 0);
-  if (lines.length === 0) return [];
-  
-  const header = lines[0]; // Extraer el encabezado del CSV
-  const dataLines = lines.slice(1);
-  const chunks: string[] = [];
-  
-  for (let i = 0; i < dataLines.length; i += rowsPerChunk) {
-    const chunkLines = dataLines.slice(i, i + rowsPerChunk);
-    // Agrupar filas incluyendo el encabezado al inicio de cada chunk para dar contexto al modelo
-    const chunk = [header, ...chunkLines].join('\n');
-    chunks.push(chunk);
-  }
-  
-  return chunks;
+  return subChunks;
 }
 
 /**
@@ -87,7 +71,23 @@ function getDocumentCategory(fileName: string): string {
 }
 
 /**
- * Genera el embedding de un fragmento de texto usando el modelo de embeddings de Gemini
+ * Asigna el responsable del documento (ownership) según su categoría
+ */
+function getDocumentOwner(category: string): string {
+  switch (category) {
+    case 'Entorno':
+      return 'DevOps Lead / Tech Lead';
+    case 'Estilo':
+      return 'Frontend & Backend Leads';
+    case 'Arquitectura':
+      return 'Software Architect';
+    default:
+      return 'Comité de Documentación Corporativa';
+  }
+}
+
+/**
+ * Llama a la API de Gemini para generar el embedding de un fragmento de texto
  */
 async function generateEmbedding(text: string): Promise<number[]> {
   try {
@@ -99,18 +99,18 @@ async function generateEmbedding(text: string): Promise<number[]> {
     if (response.embedding?.values) {
       return response.embedding.values;
     }
-    throw new Error('No se recibieron valores de embedding desde la API de Gemini.');
+    throw new Error('La respuesta de embeddings de Gemini está vacía.');
   } catch (error) {
-    console.error('Error al llamar a la API de embeddings de Gemini:', error);
+    console.error('Fallo de llamada a la API de embeddings de Gemini:', error);
     throw error;
   }
 }
 
 /**
- * Pipeline principal de ingesta de documentos locales
+ * Pipeline principal de ingesta avanzada de documentos RAG (Etapa 2)
  */
 async function startIngestion() {
-  console.log('Iniciando pipeline de ingesta de documentos RAG...');
+  console.log('Iniciando pipeline avanzado de ingesta y extracción (Etapa 2)...');
   
   const kbDir = path.join(__dirname, '..', '..', 'knowledge-base');
   
@@ -120,73 +120,88 @@ async function startIngestion() {
   }
   
   const files = fs.readdirSync(kbDir);
-  console.log(`Archivos encontrados en la base de conocimientos: ${files.join(', ')}`);
+  console.log(`Archivos detectados en knowledge-base: ${files.join(', ')}`);
   
-  // Limpiar chunks anteriores para evitar duplicados en la ingesta inicial
+  // Limpiar chunks anteriores
   try {
     console.log('Limpiando base de datos de fragmentos anteriores...');
     await dbQuery('DELETE FROM document_chunks');
   } catch (err) {
-    console.error('No se pudo limpiar la base de datos (asegúrate de correr primero las migraciones):', err);
+    console.error('No se pudo limpiar la base de datos (corre primero las migraciones):', err);
     process.exit(1);
   }
 
   for (const file of files) {
     const filePath = path.join(kbDir, file);
     const category = getDocumentCategory(file);
+    const owner = getDocumentOwner(category);
     
-    console.log(`\nProcesando archivo: "${file}" [Categoría: ${category}]`);
+    // Obtener fecha de última modificación del archivo
+    const fileStats = fs.statSync(filePath);
+    const lastModified = fileStats.mtime; // Date object
+    
+    console.log(`\nProcesando archivo: "${file}"`);
+    console.log(`- Categoría: ${category}`);
+    console.log(`- Responsable: ${owner}`);
+    console.log(`- Última Actualización: ${lastModified.toISOString()}`);
     
     try {
-      // 1. Extraer texto según formato
-      const fullText = await extractTextFromFile(filePath);
+      // 1. Extraer segmentos estructurados con ubicación usando documentParser.ts
+      const segments: DocumentSegment[] = await parseDocumentToSegments(filePath);
       
-      // 2. Fragmentar texto según el formato (CSV recibe un chunking diferente)
-      let chunks: string[] = [];
-      const ext = path.extname(file).toLowerCase();
-      if (ext === '.csv') {
-        chunks = chunkCsvText(fullText, 4); // Agrupar de 4 en 4 filas con encabezado
-      } else {
-        chunks = chunkText(fullText, 800, 120); // Trozos estándar para Markdown/texto
+      console.log(`Documento dividido originalmente en ${segments.length} segmentos estructurales.`);
+      
+      let chunkCounter = 0;
+      
+      // 2. Procesar cada segmento
+      for (const segment of segments) {
+        // Limpieza de ruido del segmento
+        const cleanContent = cleanTextContent(segment.content);
+        if (cleanContent.length === 0) continue;
+        
+        // Sub-chunking en caso de que exceda el tamaño sugerido
+        const subChunks = subChunkSegment(cleanContent, 1000, 150);
+        
+        for (let j = 0; j < subChunks.length; j++) {
+          chunkCounter++;
+          const finalChunkText = subChunks[j];
+          
+          // Crear un indicador de ubicación más específico si se subdividió
+          const finalLocation = subChunks.length > 1 
+            ? `${segment.location} (Parte ${j + 1}/${subChunks.length})`
+            : segment.location;
+            
+          console.log(`Indexando fragmento ${chunkCounter} (${finalLocation})...`);
+          
+          // 3. Generar embedding vectorial
+          const vector = await generateEmbedding(finalChunkText);
+          const dbVectorFormat = `[${vector.join(',')}]`;
+          
+          // 4. Guardar en base de datos con todos los metadatos de la Etapa 2
+          await dbQuery(
+            `INSERT INTO document_chunks 
+             (documento_nombre, categoria, contenido, ubicacion_exacta, autor_responsable, ultima_actualizacion, embedding)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [file, category, finalChunkText, finalLocation, owner, lastModified, dbVectorFormat]
+          );
+        }
       }
       
-      console.log(`Archivo fragmentado en ${chunks.length} partes.`);
-      
-      // 3. Generar embeddings y guardar en base de datos
-      for (let i = 0; i < chunks.length; i++) {
-        const chunkContent = chunks[i];
-        console.log(`Generando embedding e insertando fragmento ${i + 1}/${chunks.length}...`);
-        
-        // Obtener el vector embedding
-        const vector = await generateEmbedding(chunkContent);
-        
-        // Convertir el array numérico de JS a formato vector de PostgreSQL: '[0.123, -0.456, ...]'
-        const dbVectorFormat = `[${vector.join(',')}]`;
-        
-        // Insertar en la base de datos
-        await dbQuery(
-          `INSERT INTO document_chunks (documento_nombre, categoria, contenido, embedding)
-           VALUES ($1, $2, $3, $4)`,
-          [file, category, chunkContent, dbVectorFormat]
-        );
-      }
-      
-      console.log(`¡Archivo "${file}" indexado exitosamente!`);
+      console.log(`¡Archivo "${file}" indexado exitosamente con ${chunkCounter} fragmentos de vectores!`);
     } catch (err) {
       console.error(`Error crítico procesando el archivo "${file}":`, err);
     }
   }
   
   console.log('\n=========================================');
-  console.log('¡Pipeline de ingesta RAG finalizado con éxito!');
-  console.log('Todos los documentos se han procesado y guardado.');
+  console.log('¡Pipeline de ingesta avanzada (Etapa 2) finalizado con éxito!');
+  console.log('Todos los archivos y sus metadatos se guardaron en la base de datos.');
   console.log('=========================================');
   
-  // Finalizar pool de base de datos
   await dbPool.end();
 }
 
-// Ejecutar si se llama directamente desde node/ts-node
+// Ejecutar si se llama directamente
 if (require.main === module) {
   startIngestion();
 }

@@ -26,13 +26,16 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Tabla de Embeddings de Conocimiento (RAG)
+-- 4. Tabla de Embeddings de Conocimiento (RAG con Metadatos Detallados)
 CREATE TABLE IF NOT EXISTS document_chunks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    documento_nombre VARCHAR(150) NOT NULL, -- Nombre del archivo de origen (ej. guia_estilo.md)
-    categoria VARCHAR(50) NOT NULL,        -- Categoría (Entorno, Estilo, Arquitectura)
-    contenido TEXT NOT NULL,                -- Fragmento de texto extraído
-    embedding VECTOR(1536),                 -- Vector de 1536 dimensiones (Gemini/OpenAI compatible)
+    documento_nombre VARCHAR(150) NOT NULL,    -- Nombre del archivo (ej. guia_estilo.md)
+    categoria VARCHAR(50) NOT NULL,            -- Categoría (Entorno, Estilo, Arquitectura)
+    contenido TEXT NOT NULL,                    -- Fragmento de texto extraído
+    ubicacion_exacta VARCHAR(150),              -- Ubicación (Página X, Diapositiva Y, Filas A-B, Sección Z)
+    autor_responsable VARCHAR(150),             -- Responsable del documento
+    ultima_actualizacion TIMESTAMP WITH TIME ZONE, -- Fecha de modificación del archivo
+    embedding VECTOR(1536),                     -- Vector de embeddings de 1536 dimensiones
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
