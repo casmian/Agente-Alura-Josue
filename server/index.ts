@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
 import { runAgentConversation } from './agent/orchestrator';
+import { readLogs } from './utils/executionLogger';
 
 dotenv.config();
 
@@ -11,6 +12,16 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 // Middlewares estándar
 app.use(cors());
 app.use(express.json());
+
+// Endpoint para consultar logs de auditoría local (Monitoreo)
+app.get('/api/logs', (req, res) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+  const logs = readLogs(limit);
+  res.status(200).json({
+    success: true,
+    data: logs
+  });
+});
 
 // Endpoint de Diagnóstico y Salud
 app.get('/health', (req, res) => {

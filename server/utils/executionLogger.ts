@@ -36,3 +36,31 @@ export function logExecution(entry: LogEntry): void {
     console.error('[Logger] Error al escribir en el archivo de registro local:', error);
   }
 }
+
+/**
+ * Lee los últimos registros de ejecución en formato JSON Lines
+ */
+export function readLogs(limit: number = 50): LogEntry[] {
+  try {
+    if (!fs.existsSync(logFile)) {
+      return [];
+    }
+    const fileContent = fs.readFileSync(logFile, 'utf8');
+    const lines = fileContent.trim().split('\n').filter(line => line.trim() !== '');
+    
+    const logs: LogEntry[] = lines.map(line => {
+      try {
+        return JSON.parse(line);
+      } catch (e) {
+        return null;
+      }
+    }).filter(entry => entry !== null) as LogEntry[];
+
+    // Devolver invertido para tener el más reciente primero, limitado a 'limit'
+    return logs.slice(-limit).reverse();
+  } catch (error) {
+    console.error('[Logger] Error al leer el archivo de registros local:', error);
+    return [];
+  }
+}
+

@@ -16,6 +16,15 @@ interface Message {
   references: Reference[];
 }
 
+interface LogEntry {
+  timestamp: string;
+  chatId: string;
+  query: string;
+  context: string;
+  response: string;
+  latencyMs: number;
+}
+
 // URL base de la API backend (Vite soporta import.meta.env)
 const API_URL = 'http://localhost:3000/api/chat';
 
@@ -26,7 +35,29 @@ export default function App() {
   const [categoryFilter, setCategoryFilter] = useState<string>('Todos');
   const [isLoading, setIsLoading] = useState(false);
   
+  // Estados para Monitoreo de logs local
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const fetchLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const response = await fetch('http://localhost:3000/api/logs');
+      if (response.ok) {
+        const json = await response.json();
+        if (json.success) {
+          setLogs(json.data);
+        }
+      }
+    } catch (err) {
+      console.error('Error al consultar logs de ejecución:', err);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
 
   // 1. Cargar la sesión guardada desde LocalStorage en el arranque
   useEffect(() => {
@@ -251,6 +282,10 @@ export default function App() {
           <span>💬</span> Nuevo Chat
         </button>
 
+        <button className="btn-logs" onClick={() => { setShowLogsModal(true); fetchLogs(); }}>
+          <span>📊</span> Logs de Auditoría
+        </button>
+
         <div style={{ marginTop: 'auto' }}>
           <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center' }}>
             Desafío Alura Agentes v1.0.0
@@ -380,6 +415,55 @@ export default function App() {
         </div>
 
       </main>
+
+      {/* 3. Modal Overlay de Logs de Auditoría (Monitoreo) */}
+      {showLogsModal && (
+        <div className="modal-overlay" onClick={() => setShowLogsModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">
+                <span>📊</span> Historial de Logs de Auditoría (Local RAG)
+              </div>
+              <button className="btn-close" onClick={() => setShowLogsModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              {logsLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  Cargando logs de auditoría local...
+                </div>
+              ) : logs.length === 0 ? (
+                <div className="log-empty-state">
+                  No hay logs de ejecución guardados localmente todavía. Haz una pregunta en el chat para registrarla.
+                </div>
+              ) : (
+                logs.map((log, index) => (
+                  <div key={index} className="log-item-card">
+                    <div className="log-item-header">
+                      <span>🕒 {new Date(log.timestamp).toLocaleString()}</span>
+                      <span>Chat ID: <code>{log.chatId ? log.chatId.substring(0, 10) : 'n/a'}...</code></span>
+                      <span className="log-badge-latency">{log.latencyMs} ms</span>
+                    </div>
+                    
+                    <div className="log-item-query">
+                      ❓ {log.query}
+                    </div>
+
+                    <div className="log-item-section">
+                      <div className="log-item-label">Contexto Recuperado (RAG)</div>
+                      <div className="log-item-content">{log.context}</div>
+                    </div>
+
+                    <div className="log-item-section">
+                      <div className="log-item-label">Respuesta del Agente</div>
+                      <div className="log-item-content">{log.response}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
