@@ -1,0 +1,9 @@
+Modulo,Ruta,Descripcion,Responsable,Test_Asociado
+Frontend App,src/main.tsx,Punto de entrada de la aplicacion cliente React,Equipo Frontend,src/App.test.tsx
+Chat Interface,src/components/ChatWindow.tsx,Componente de chat interactivo con burbujas de mensajes y soporte de Markdown,Equipo Frontend,src/components/ChatWindow.test.tsx
+Backend Express Server,server/index.ts,Punto de partida del servidor Express y enrutamiento de la API,Equipo Backend,server/index.test.ts
+Agent Core Orchestrator,server/agent/orchestrator.ts,Modulo principal que conecta con Google Gen AI SDK (Gemini) y coordina el historial y herramientas,Equipo IA,server/agent/orchestrator.test.ts
+RAG Search Module,server/agent/rag.ts,Realiza busquedas semanticas de fragmentos de cursos y documentacion en PostgreSQL usando pgvector,Equipo IA,server/agent/rag.test.ts
+Web Search Tool,server/agent/tools/webSearch.ts,Modulo para realizar consultas externas via Google Search API ante dudas tecnicas avanzadas,Equipo Backend,server/agent/tools/webSearch.test.ts
+Database Client,server/db/client.ts,Inicializacion del cliente de base de datos PostgreSQL e integracion de embeddings,Equipo Backend,server/db/client.test.ts
+Customizations Registry,.agents/skills.json,Registro de las carpetas de habilidades habilitadas para el procesamiento del agente,Equipo DevOps,N/A
