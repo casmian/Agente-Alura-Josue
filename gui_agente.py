@@ -88,7 +88,8 @@ class InterfazAgenteAlura:
             self.marco_cabecera,
             self.variable_proveedor,
             "Gemini (Google)",
-            "NVIDIA (NIM)",
+            "MiniMax (NVIDIA)",
+            "Nemotron (NVIDIA)",
             command=self.cambiar_proveedor
         )
         self.selector_proveedor.config(
@@ -146,6 +147,8 @@ class InterfazAgenteAlura:
         self.registro_chat.tag_config("h3", font=(FAMILIA_FUENTE, TAMANO_FUENTE, "bold"), foreground=ACENTO_ROSA)
         self.registro_chat.tag_config("list_bullet", font=(FAMILIA_FUENTE, TAMANO_FUENTE, "bold"), foreground=ACENTO_MALVA)
         self.registro_chat.tag_config("code_block", font=("Courier New", TAMANO_FUENTE), background=FONDO_CODIGO, foreground=TEXTO_CODIGO)
+        self.registro_chat.tag_config("thought_text", font=(FAMILIA_FUENTE, TAMANO_FUENTE - 1, "italic"), foreground=TEXTO_MUTADO)
+
         
         # Hacer que el registro_chat sea de solo lectura para el usuario
         self.registro_chat.config(state=tk.DISABLED)
@@ -205,7 +208,8 @@ class InterfazAgenteAlura:
     def inicializar_agente(self):
         load_dotenv()
         clave_api = os.getenv("GEMINI_API_KEY")
-        clave_nvidia = os.getenv("NVIDIA_API_KEY")
+        clave_minimax = os.getenv("NVIDIA_MINIMAX_KEY")
+        clave_nemotron = os.getenv("NVIDIA_NEMOTRON_KEY")
         
         if not clave_api:
             self.cola_respuestas.put(("INIT_ERROR", "No se encontró la clave GEMINI_API_KEY en el archivo .env.\nPor favor agrégala para poder interactuar con el agente."))
@@ -260,10 +264,10 @@ DOCUMENTOS DE NEOUNIVERSE:
             ]
             
             mensajes_ok = "¡Conectado exitosamente con Gemini!"
-            if clave_nvidia:
-                mensajes_ok += "\nAPI de NVIDIA (NIM) configurada y lista para usarse."
-            else:
-                mensajes_ok += "\nAdvertencia: NVIDIA_API_KEY no detectada. NVIDIA NIM estará deshabilitado."
+            if clave_minimax:
+                mensajes_ok += "\n• MiniMax (NVIDIA) configurado."
+            if clave_nemotron:
+                mensajes_ok += "\n• Nemotron (NVIDIA) configurado."
                 
             self.cola_respuestas.put(("INIT_SUCCESS", mensajes_ok))
         except Exception as e:
@@ -288,36 +292,55 @@ DOCUMENTOS DE NEOUNIVERSE:
         self.barra_estado.config(text=texto)
 
     def cambiar_proveedor(self, valor):
-        if valor == "NVIDIA (NIM)":
-            clave_api = os.getenv("NVIDIA_API_KEY")
+        if valor == "MiniMax (NVIDIA)":
+            clave_api = os.getenv("NVIDIA_MINIMAX_KEY")
             if not clave_api:
-                messagebox.showerror("Error de Configuración", "No se encontró la clave NVIDIA_API_KEY en el archivo .env.")
+                messagebox.showerror("Error de Configuración", "No se encontró la clave NVIDIA_MINIMAX_KEY en el archivo .env.")
                 self.variable_proveedor.set("Gemini (Google)")
                 return
-            self.mostrar_mensaje_sistema("Cambiado a proveedor: NVIDIA (NIM)")
+            self.mostrar_mensaje_sistema("Cambiado a proveedor: MiniMax (NVIDIA)")
+        elif valor == "Nemotron (NVIDIA)":
+            clave_api = os.getenv("NVIDIA_NEMOTRON_KEY")
+            if not clave_api:
+                messagebox.showerror("Error de Configuración", "No se encontró la clave NVIDIA_NEMOTRON_KEY en el archivo .env.")
+                self.variable_proveedor.set("Gemini (Google)")
+                return
+            self.mostrar_mensaje_sistema("Cambiado a proveedor: Nemotron (NVIDIA)")
         else:
             clave_api = os.getenv("GEMINI_API_KEY")
             if not clave_api:
                 messagebox.showerror("Error de Configuración", "No se encontró la clave GEMINI_API_KEY en el archivo .env.")
-                self.variable_proveedor.set("NVIDIA (NIM)")
+                # Intentar revertir a alguna disponible
+                if os.getenv("NVIDIA_MINIMAX_KEY"):
+                    self.variable_proveedor.set("MiniMax (NVIDIA)")
+                else:
+                    self.variable_proveedor.set("Nemotron (NVIDIA)")
                 return
             self.mostrar_mensaje_sistema("Cambiado a proveedor: Gemini (Google)")
 
     # -------------------------------------------------------------
     # FORMATEO DE MENSAJES Y RENDERING DE MARKDOWN AVANZADO
     # -------------------------------------------------------------
-    def insertar_mensaje_formateado(self, remitente, texto):
+    def insertar_mensaje_formateado(self, remitente, texto, es_pensamiento=False):
         self.registro_chat.config(state=tk.NORMAL)
         
         # Insertar cabecera con el remitente y la hora
         ahora = datetime.now().strftime("%H:%M")
-        tag_cabecera = "user_header" if remitente == "Tú" else "agent_header"
-        
-        self.registro_chat.insert(tk.END, f"{remitente} ", tag_cabecera)
+        if es_pensamiento:
+            tag_cabecera = "system" # Color malva / violeta
+            self.registro_chat.insert(tk.END, f"💭 {remitente} ", tag_cabecera)
+        else:
+            tag_cabecera = "user_header" if remitente == "Tú" else "agent_header"
+            self.registro_chat.insert(tk.END, f"{remitente} ", tag_cabecera)
+            
         self.registro_chat.insert(tk.END, f"[{ahora}]\n", "timestamp")
         
-        # Renderizar Markdown de forma estructurada
-        self.renderizar_markdown(texto)
+        # Renderizar contenido
+        if es_pensamiento:
+            self.registro_chat.insert(tk.END, texto, "thought_text")
+            self.registro_chat.insert(tk.END, "\n\n")
+        else:
+            self.renderizar_markdown(texto)
         
         self.registro_chat.insert(tk.END, "\n")
         self.registro_chat.config(state=tk.DISABLED)
@@ -431,37 +454,57 @@ DOCUMENTOS DE NEOUNIVERSE:
 
     def hilo_consultar_nvidia(self, mensaje):
         try:
-            clave_api = os.getenv("NVIDIA_API_KEY")
-            modelo = os.getenv("NVIDIA_MODEL", "nvidia/llama-3.1-nemotron-70b-instruct")
+            proveedor = self.variable_proveedor.get()
+            
+            if proveedor == "MiniMax (NVIDIA)":
+                clave_api = os.getenv("NVIDIA_MINIMAX_KEY")
+                modelo = os.getenv("NVIDIA_MINIMAX_MODEL", "minimaxai/minimax-m3")
+                payload = {
+                    "model": modelo,
+                    "messages": self.historial_nvidia,
+                    "temperature": 1.0,
+                    "top_p": 0.95,
+                    "max_tokens": 1024
+                }
+            else: # Nemotron (NVIDIA)
+                clave_api = os.getenv("NVIDIA_NEMOTRON_KEY")
+                modelo = os.getenv("NVIDIA_NEMOTRON_MODEL", "nvidia/nemotron-3-ultra-550b-a55b")
+                payload = {
+                    "model": modelo,
+                    "messages": self.historial_nvidia,
+                    "temperature": 1.0,
+                    "top_p": 0.95,
+                    "max_tokens": 8192,
+                    "chat_template_kwargs": {"enable_thinking": True},
+                    "reasoning_budget": 8192
+                }
             
             # Agregar mensaje del usuario al historial local
             self.historial_nvidia.append({"role": "user", "content": mensaje})
+            if "messages" in payload:
+                payload["messages"] = self.historial_nvidia
             
             url = "https://integrate.api.nvidia.com/v1/chat/completions"
             headers = {
                 "Authorization": f"Bearer {clave_api}",
                 "Content-Type": "application/json"
             }
-            payload = {
-                "model": modelo,
-                "messages": self.historial_nvidia,
-                "temperature": 0.5,
-                "max_tokens": 1024
-            }
             
             import requests
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            response = requests.post(url, headers=headers, json=payload, timeout=35)
             
             if response.status_code != 200:
                 raise Exception(f"HTTP {response.status_code}: {response.text}")
                 
             datos_respuesta = response.json()
-            texto_respuesta = datos_respuesta["choices"][0]["message"]["content"]
+            message_obj = datos_respuesta["choices"][0]["message"]
+            texto_respuesta = message_obj.get("content", "")
+            reasoning = message_obj.get("reasoning_content", None)
             
             # Agregar respuesta del asistente al historial local
             self.historial_nvidia.append({"role": "assistant", "content": texto_respuesta})
             
-            self.cola_respuestas.put(("CHAT_SUCCESS", texto_respuesta))
+            self.cola_respuestas.put(("CHAT_SUCCESS", {"content": texto_respuesta, "reasoning": reasoning}))
         except Exception as e:
             self.cola_respuestas.put(("CHAT_ERROR", str(e)))
 
@@ -486,7 +529,15 @@ DOCUMENTOS DE NEOUNIVERSE:
                     self.mostrar_mensaje_sistema(f"Advertencia: {datos}")
                     
                 elif tipo == "CHAT_SUCCESS":
-                    self.insertar_mensaje_formateado("Agente Alura", datos)
+                    if isinstance(datos, dict):
+                        contenido = datos.get("content", "")
+                        razonamiento = datos.get("reasoning", "")
+                        if razonamiento:
+                            self.insertar_mensaje_formateado("Pensamiento del Agente", razonamiento, es_pensamiento=True)
+                        self.insertar_mensaje_formateado("Agente Alura", contenido)
+                    else:
+                        self.insertar_mensaje_formateado("Agente Alura", datos)
+                        
                     self.establecer_estado("Conectado")
                     self.cargando = False
                     self.entrada_mensaje.config(state=tk.NORMAL)

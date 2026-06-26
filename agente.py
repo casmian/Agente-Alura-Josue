@@ -65,27 +65,42 @@ DOCUMENTOS DE NEOUNIVERSE:
 # 4. Selector de Proveedor
 print("\nSeleccione el proveedor de Inteligencia Artificial:")
 print("1. Gemini (Google) [Por defecto]")
-print("2. NVIDIA (NIM)")
-seleccion = input("Selección (1 o 2): ").strip()
+print("2. MiniMax (NVIDIA)")
+print("3. Nemotron (NVIDIA)")
+seleccion = input("Selección (1, 2 o 3): ").strip()
 
 proveedor = "gemini"
 clave_nvidia = None
 modelo_nvidia = None
 historial_nvidia = []
 sesion_chat = None
+usar_thinking = False
 
 if seleccion == "2":
-    proveedor = "nvidia"
-    clave_nvidia = os.getenv("NVIDIA_API_KEY")
-    modelo_nvidia = os.getenv("NVIDIA_MODEL", "nvidia/llama-3.1-nemotron-70b-instruct")
+    proveedor = "minimax"
+    clave_nvidia = os.getenv("NVIDIA_MINIMAX_KEY")
+    modelo_nvidia = os.getenv("NVIDIA_MINIMAX_MODEL", "minimaxai/minimax-m3")
     if not clave_nvidia:
-        print("[ERROR] No se encontró la clave NVIDIA_API_KEY en el archivo .env")
+        print("[ERROR] No se encontró la clave NVIDIA_MINIMAX_KEY en el archivo .env")
         sys.exit(1)
     # Inicializar historial para Nvidia
     historial_nvidia = [
         {"role": "system", "content": instrucciones_sistema}
     ]
-    print(f"\nConectando con la API de NVIDIA (Modelo: {modelo_nvidia})...")
+    print(f"\nConectando con la API de NVIDIA - MiniMax (Modelo: {modelo_nvidia})...")
+elif seleccion == "3":
+    proveedor = "nemotron"
+    clave_nvidia = os.getenv("NVIDIA_NEMOTRON_KEY")
+    modelo_nvidia = os.getenv("NVIDIA_NEMOTRON_MODEL", "nvidia/nemotron-3-ultra-550b-a55b")
+    if not clave_nvidia:
+        print("[ERROR] No se encontró la clave NVIDIA_NEMOTRON_KEY en el archivo .env")
+        sys.exit(1)
+    # Inicializar historial para Nvidia
+    historial_nvidia = [
+        {"role": "system", "content": instrucciones_sistema}
+    ]
+    usar_thinking = True
+    print(f"\nConectando con la API de NVIDIA - Nemotron (Modelo: {modelo_nvidia})...")
 else:
     print("\nConectando con la inteligencia artificial de Gemini...")
     try:
@@ -102,8 +117,14 @@ else:
         sys.exit(1)
 
 # 5. Iniciar la sesión de chat interactiva
+nombre_chat = "Gemini Google"
+if proveedor == "minimax":
+    nombre_chat = "NVIDIA MiniMax"
+elif proveedor == "nemotron":
+    nombre_chat = "NVIDIA Nemotron"
+
 print("\n==================================================================")
-print(f"🤖 Agente Alura — Consola de Chat Interactiva ({'NVIDIA NIM' if proveedor == 'nvidia' else 'Gemini Google'}) 🤖")
+print(f"🤖 Agente Alura — Consola de Chat Interactiva ({nombre_chat}) 🤖")
 print("==================================================================")
 print("Escribe tus consultas sobre Neouniverse. Para salir escribe: salir\n")
 
@@ -136,19 +157,31 @@ while True:
                 "Authorization": f"Bearer {clave_nvidia}",
                 "Content-Type": "application/json"
             }
+            
             payload = {
                 "model": modelo_nvidia,
                 "messages": historial_nvidia,
-                "temperature": 0.5,
-                "max_tokens": 1024
+                "temperature": 1.0,
+                "top_p": 0.95,
+                "max_tokens": 8192 if usar_thinking else 1024
             }
             
+            if usar_thinking:
+                payload["chat_template_kwargs"] = {"enable_thinking": True}
+                payload["reasoning_budget"] = 8192
+            
             import requests
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            response = requests.post(url, headers=headers, json=payload, timeout=35)
             
             if response.status_code == 200:
                 respuesta_json = response.json()
-                texto_respuesta = respuesta_json["choices"][0]["message"]["content"]
+                message_obj = respuesta_json["choices"][0]["message"]
+                texto_respuesta = message_obj.get("content", "")
+                reasoning = message_obj.get("reasoning_content", None)
+                
+                if reasoning:
+                    print(f"\n💭 Pensamiento del Agente:\n{reasoning}\n")
+                
                 historial_nvidia.append({"role": "assistant", "content": texto_respuesta})
                 print(f"\nAgente Alura:\n{texto_respuesta}")
             else:
