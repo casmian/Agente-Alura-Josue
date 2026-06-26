@@ -27,4 +27,8 @@ temp/
 node_modules/
 dist/
 logs/
+.venv/
 
+# Python cache
+__pycache__/
+*.pyc
