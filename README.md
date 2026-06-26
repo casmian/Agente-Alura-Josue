@@ -53,7 +53,7 @@ graph TD
 
 * **`.agents/`**: Reglas de desarrollo e importación de habilidades para el asistente de IA.
 * **`google-skills/`**: Habilidades clonadas de Google como soporte de procesamiento e infraestructura.
-* **`knowledge-base/`**: Documentación cargada por defecto para simular el onboarding técnico:
-  - [`configuracion_entorno.md`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/configuracion_entorno.md): Manual paso a paso de desarrollo local.
-  - [`guia_estilo.md`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/guia_estilo.md): Guías de TypeScript, Git, Commits y Vanilla CSS.
-  - [`mapa_modulos.csv`](file:///c:/Users/NeoUniverse/Agente-Alura/knowledge-base/mapa_modulos.csv): Base de datos en formato CSV de la arquitectura de la aplicación.
+* **`base-conocimiento/`**: Documentación cargada por defecto para simular el onboarding técnico:
+  - [`configuracion_entorno.md`](file:///c:/Users/NeoUniverse/Agente-Alura/base-conocimiento/configuracion_entorno.md): Manual paso a paso de desarrollo local.
+  - [`guia_estilo.md`](file:///c:/Users/NeoUniverse/Agente-Alura/base-conocimiento/guia_estilo.md): Guías de TypeScript, Git, Commits y Vanilla CSS.
+  - [`mapa_modulos.csv`](file:///c:/Users/NeoUniverse/Agente-Alura/base-conocimiento/mapa_modulos.csv): Base de datos en formato CSV de la arquitectura de la aplicación.

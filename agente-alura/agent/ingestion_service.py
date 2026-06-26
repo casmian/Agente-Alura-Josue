@@ -69,13 +69,13 @@ def sub_chunk_segment(text: str, max_chunk_size: int = 1000, overlap: int = 150)
 def start_ingestion():
     print("Iniciando pipeline de ingesta y extracción RAG en Python...")
     
-    kb_dir = os.path.join(os.path.dirname(__file__), "..", "..", "knowledge-base")
+    kb_dir = os.path.join(os.path.dirname(__file__), "..", "..", "base-conocimiento")
     if not os.path.exists(kb_dir):
         print(f"El directorio de base de conocimientos no existe: {kb_dir}")
         sys.exit(1)
         
     files = os.listdir(kb_dir)
-    print(f"Archivos detectados en knowledge-base: {', '.join(files)}")
+    print(f"Archivos detectados en base-conocimiento: {', '.join(files)}")
     
     mock_store = []
     

@@ -207,7 +207,7 @@ def retrieve_relevant_context(query: str, category_filter: str = None, limit_can
                 
         # Fallback si el cache está vacío o falló
         if not candidates:
-            kb_dir = os.path.join(os.path.dirname(__file__), "..", "..", "knowledge-base")
+            kb_dir = os.path.join(os.path.dirname(__file__), "..", "..", "base-conocimiento")
             if os.path.exists(kb_dir):
                 files = os.listdir(kb_dir)
                 for idx, file in enumerate(files):

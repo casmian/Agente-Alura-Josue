@@ -136,7 +136,7 @@ def main():
         formato = "md"
         
     # Configurar rutas de salida
-    kb_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "knowledge-base"))
+    kb_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "base-conocimiento"))
     os.makedirs(kb_dir, exist_ok=True)
     
     # Generar nombre del archivo siguiendo el estándar: [Nombre_Limpio]__Neouniverse.[ext]
