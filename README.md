@@ -1,22 +1,26 @@
-# Agente Alura: Mentor Técnico de Onboarding (Python Simplificado) 🤖📚
+# Agente Alura: Mentor Técnico de Onboarding 🤖📚
 
-**Agente Alura** es un asistente cognitivo inteligente interactivo diseñado para ejecutarse directamente en la terminal de comandos (CLI) utilizando Python puro. Su objetivo es actuar como un mentor técnico para resolver dudas de onboarding, guías de estilos de código, arquitectura de microservicios y políticas operativas de la compañía **Neouniverse** basándose en la documentación oficial de forma directa y sin sobreingeniería.
+**Agente Alura** es un asistente cognitivo inteligente interactivo diseñado para actuar como mentor técnico y resolver dudas de onboarding, guías de estilo de código, arquitectura de microservicios y políticas operativas de la compañía **Neouniverse** basándose en la documentación oficial.
+
+Esta actualización introduce una nueva **Interfaz Gráfica de Escritorio (GUI)** construida con Tkinter, además de la versión clásica de consola (CLI), ambas completamente adaptadas al español.
 
 ---
 
-## 🏗️ Cómo está Construido (Arquitectura Simplificada)
+## 🏗️ Cómo está Construido (Arquitectura del Proyecto)
 
-Para mantener la base de código simple, legible y fácil de mantener (apta para programadores principiantes), el proyecto ha sido simplificado al máximo:
+Para mantener la base de código simple, legible y fácil de mantener (apta para programadores de todos los niveles), el proyecto ha sido estructurado de la siguiente forma:
 
-1. **Sin Base de Datos**: Se eliminó la necesidad de configurar servidores de base de datos relacionales, extensiones complejas como `pgvector` o ingestas de embeddings locales.
-2. **Inyección de Contexto en Tiempo Real**: El script lee directamente los archivos de texto y markdown locales y los adjunta como parte del prompt del sistema (*system instruction*) a la API de Gemini, aprovechando la amplia ventana de contexto del modelo para una atención perfecta y precisa.
+1. **Sin Base de Datos**: Se eliminó la necesidad de configurar servidores de bases de datos relacionales o complejas ingestas de embeddings vectoriales.
+2. **Inyección de Contexto en Tiempo Real**: El script lee directamente los archivos de texto y markdown locales del directorio `base-conocimiento/` y los adjunta como parte de la instrucción de sistema (*system instruction*) a la API de Gemini, aprovechando la amplia ventana de contexto del modelo.
 3. **Chat Interactivo Continuo**: Mantiene un hilo de conversación de memoria interactiva nativa gracias al objeto `chats` del SDK oficial de Google Gen AI.
+4. **Hilos Asíncronos (para GUI)**: La interfaz gráfica ejecuta las llamadas a la API en un hilo secundario de ejecución (`threading`), evitando que la ventana se congele durante la generación de respuestas.
+5. **Estilo Premium**: La interfaz gráfica cuenta con un esquema de colores oscuros inspirado en la paleta *Catppuccin Mocha*, ofreciendo un diseño elegante, moderno y limpio.
 
 ---
 
 ## 📁 Estructura del Repositorio
 
-El proyecto consta de una estructura minimalista de archivos:
+El proyecto consta de la siguiente estructura:
 
 * **`base-conocimiento/`**: Carpeta que contiene todos los manuales y políticas de Neouniverse en formatos Markdown (`.md`) y CSV (`.csv`):
   * `Politicas_Corporativas_de_Seguridad_y_Operaciones__Neouniverse.md`
@@ -30,10 +34,11 @@ El proyecto consta de una estructura minimalista de archivos:
   * `Guia_Oficial_de_Ingenieria_Frontend__Neouniverse.md`
   * `Arquitectura_de_Microservicios_y_Mapa_de_Dominios__Neouniverse.csv`
   * `Protocolo_de_Respuesta_a_Incidentes__Neouniverse.md`
-* **`agente.py`**: Script monolítico principal de Python que lee el contexto e inicia la conversación en terminal.
-* **`requirements.txt`**: Archivo de requerimientos de Python que contiene únicamente las dependencias básicas necesarias (`google-genai` y `python-dotenv`).
-* **`.env`**: Archivo local de variables de entorno que almacena tu clave de API (`GEMINI_API_KEY`).
-* **`.gitignore`**: Configuración de Git para omitir recursos temporales del sistema y la caché local.
+* **`gui_agente.py`**: Interfaz gráfica de escritorio (GUI) en español construida con Tkinter/ttk que permite chatear en una ventana interactiva moderna.
+* **`agente.py`**: Script clásico de consola (CLI) que inicia la conversación directamente en la terminal.
+* **`requirements.txt`**: Archivo de dependencias mínimas requeridas (`google-genai` y `python-dotenv`).
+* **`.env`**: Archivo local de variables de entorno para almacenar de forma segura la API Key de Gemini (`GEMINI_API_KEY`).
+* **`.gitignore`**: Configuración de Git para omitir recursos temporales del sistema, la caché local y archivos de configuración personal.
 
 ---
 
@@ -49,9 +54,9 @@ GEMINI_API_KEY=tu_clave_api_aqui
 ```
 
 ### 3. Instalación de Dependencias
-Crea y activa un entorno virtual de Python, e instala las dependencias simplificadas:
+Crea y activa un entorno virtual de Python, e instala las dependencias necesarias:
 ```bash
-# Crear entorno virtual (opcional)
+# Crear entorno virtual (opcional pero recomendado)
 python -m venv .venv
 
 # Activar entorno virtual
@@ -60,7 +65,7 @@ python -m venv .venv
 # En Linux/macOS:
 source .venv/bin/activate
 
-# Instalar los requerimientos mínimos
+# Instalar requerimientos
 pip install -r requirements.txt
 ```
 
@@ -68,10 +73,18 @@ pip install -r requirements.txt
 
 ## 🏃 Cómo Ejecutar el Agente
 
-Una vez configurado el entorno, puedes chatear interactivamente con el agente de Neouniverse corriendo el script principal en tu terminal:
+Puedes interactuar con el Agente Alura en cualquiera de sus dos modalidades:
 
+### Opción A: Interfaz Gráfica (Recomendado) 🖥️
+Inicia la ventana interactiva ejecutando el siguiente comando:
+```bash
+python gui_agente.py
+```
+Esta versión ofrece una ventana moderna con colores oscuros, scrolling automático, indicador visual de carga ("Pensando...") y formato para bloques de código y textos en negrita.
+
+### Opción B: Consola de Comandos 💻
+Si prefieres interactuar directamente desde la terminal clásica:
 ```bash
 python agente.py
 ```
-
-Escribe tus dudas técnicas u operativas en el prompt y el agente te responderá de forma directa. Para terminar la conversación, simplemente escribe **`salir`** y presiona Enter.
+Escribe tus consultas directamente en el prompt. Para finalizar la conversación, simplemente escribe **`salir`** y presiona Enter.
