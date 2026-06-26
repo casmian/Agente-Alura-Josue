@@ -1,59 +1,77 @@
-# Agente Alura: Ecosistema Corporativo de Onboarding y Mentoría 🤖📚
+# Agente Alura: Mentor Técnico de Onboarding (Python Simplificado) 🤖📚
 
-**Agente Alura** es un asistente cognitivo inteligente de nivel empresarial diseñado para interactuar con los colaboradores de una organización. Su objetivo principal es resolver dudas y consultas en tiempo real actuando como un mentor técnico con base en la documentación interna de la empresa.
-
----
-
-## 🎯 Objetivo y Alcance del Proyecto
-
-Desarrollar un agente de inteligencia artificial corporativo, accesible para todos los colaboradores de forma abierta, capaz de responder preguntas con base en documentos internos en múltiples formatos (desde guías de estilo y configuraciones de desarrollo hasta hojas de cálculo de módulos).
-
-### 📄 Formatos de Archivos Soportados
-El motor de ingesta del agente cuenta con lectores especializados para procesar:
-- **Documentos de Texto**: PDF (`.pdf`), Word (`.docx`), Markdown (`.md`), HTML (`.html`).
-- **Hojas de Cálculo y Estructuras**: Excel (`.xlsx`), CSV (`.csv`), JSON (`.json`).
-- **Presentaciones**: PowerPoint (`.pptx`).
+**Agente Alura** es un asistente cognitivo inteligente interactivo diseñado para ejecutarse directamente en la terminal de comandos (CLI) utilizando Python puro. Su objetivo es actuar como un mentor técnico para resolver dudas de onboarding, guías de estilos de código, arquitectura de microservicios y políticas operativas de la compañía **Neouniverse** basándose en la documentación oficial de forma directa y sin sobreingeniería.
 
 ---
 
-## ☁️ Arquitectura e Infraestructura de Nube (OCI)
+## 🏗️ Cómo está Construido (Arquitectura Simplificada)
 
-Para cumplir con las especificaciones de despliegue del reto, el proyecto utiliza la nube de **Oracle Cloud Infrastructure (OCI)**:
+Para mantener la base de código simple, legible y fácil de mantener (apta para programadores principiantes), el proyecto ha sido simplificado al máximo:
 
-```mermaid
-graph TD
-    User[Colaborador / Navegador] <-->|HTTPS| LoadBalancer[OCI Load Balancer / API Gateway]
-    LoadBalancer <-->|Node.js Backend| OCI_VM[OCI Compute Instance VM]
-    OCI_VM <-->|Google Gen AI SDK| Gemini[Gemini API]
-    OCI_VM <-->|Búsqueda Semántica RAG| DB[(OCI Database with PostgreSQL)]
-    OCI_VM <-->|Almacenamiento de Documentos| ObjectStorage[OCI Object Storage]
-```
-
-### Servicios de OCI Utilizados:
-1. **OCI Compute (Virtual Machine)**: Instancia de cómputo en la nube (Ubuntu/Oracle Linux) encargada de hospedar el backend en Node.js y servir la aplicación web de React.
-2. **OCI Object Storage**: Repositorio de almacenamiento de objetos donde se cargan y guardan los archivos originales (PDF, Word, CSV, etc.) subidos por la empresa, sirviendo como el "Data Lake" de conocimientos del agente.
-3. **OCI PostgreSQL (Base de Datos)**: Base de datos relacional administrada para almacenar usuarios, sesiones de chat e indexar embeddings vectoriales mediante la extensión `pgvector`.
-
----
-
-## 🤖 Capacidades Clave del Agente (Reglamento Operativo)
-
-1. **Tutor de Programación e Integración (Onboarding)**:
-   - Explicar arquitecturas de código complejas y guiar de forma socrática a los nuevos programadores.
-   - Evaluar código proporcionado de forma constructiva sin resolverlo directamente.
-2. **Consultor RAG Multiformato**:
-   - Extraer y vectorizar información de archivos PDF, Excel, Word, etc., cargados en OCI Object Storage.
-   - Generar respuestas detalladas citando explícitamente el nombre del archivo y la sección de donde se obtuvo la respuesta.
-3. **Sandbox y Herramientas (Function Calling)**:
-   - Integración segura con Google Search para corroborar sintaxis de APIs.
+1. **Sin Base de Datos**: Se eliminó la necesidad de configurar servidores de base de datos relacionales, extensiones complejas como `pgvector` o ingestas de embeddings locales.
+2. **Inyección de Contexto en Tiempo Real**: El script lee directamente los archivos de texto y markdown locales y los adjunta como parte del prompt del sistema (*system instruction*) a la API de Gemini, aprovechando la amplia ventana de contexto del modelo para una atención perfecta y precisa.
+3. **Chat Interactivo Continuo**: Mantiene un hilo de conversación de memoria interactiva nativa gracias al objeto `chats` del SDK oficial de Google Gen AI.
 
 ---
 
 ## 📁 Estructura del Repositorio
 
-* **`.agents/`**: Reglas de desarrollo e importación de habilidades para el asistente de IA.
-* **`google-skills/`**: Habilidades clonadas de Google como soporte de procesamiento e infraestructura.
-* **`base-conocimiento/`**: Documentación cargada por defecto para simular el onboarding técnico:
-  - [`configuracion_entorno.md`](file:///c:/Users/NeoUniverse/Agente-Alura/base-conocimiento/configuracion_entorno.md): Manual paso a paso de desarrollo local.
-  - [`guia_estilo.md`](file:///c:/Users/NeoUniverse/Agente-Alura/base-conocimiento/guia_estilo.md): Guías de TypeScript, Git, Commits y Vanilla CSS.
-  - [`mapa_modulos.csv`](file:///c:/Users/NeoUniverse/Agente-Alura/base-conocimiento/mapa_modulos.csv): Base de datos en formato CSV de la arquitectura de la aplicación.
+El proyecto consta de una estructura minimalista de archivos:
+
+* **`base-conocimiento/`**: Carpeta que contiene todos los manuales y políticas de Neouniverse en formatos Markdown (`.md`) y CSV (`.csv`):
+  * `Politicas_Corporativas_de_Seguridad_y_Operaciones__Neouniverse.md`
+  * `Guia_de_Configuracion_y_Despliegue_Continuo_CICD__Neouniverse.md`
+  * `Manual_de_Practicas_de_Pruebas_y_Calidad_de_Software_QA__Neouniverse.md`
+  * `Guia_de_Monitoreo_y_Configuracion_de_Observabilidad__Neouniverse.md`
+  * `Manual_de_Politicas_y_Procesos_de_RRHH__Neouniverse.md`
+  * `Manual_de_Base_de_Datos_y_Esquema_Vectorial__Neouniverse.md`
+  * `Manual_de_Onboarding_Nuevos_Desarrolladores__Neouniverse.md`
+  * `Guia_Oficial_de_Ingenieria_Backend__Neouniverse.md`
+  * `Guia_Oficial_de_Ingenieria_Frontend__Neouniverse.md`
+  * `Arquitectura_de_Microservicios_y_Mapa_de_Dominios__Neouniverse.csv`
+  * `Protocolo_de_Respuesta_a_Incidentes__Neouniverse.md`
+* **`agente.py`**: Script monolítico principal de Python que lee el contexto e inicia la conversación en terminal.
+* **`requirements.txt`**: Archivo de requerimientos de Python que contiene únicamente las dependencias básicas necesarias (`google-genai` y `python-dotenv`).
+* **`.env`**: Archivo local de variables de entorno que almacena tu clave de API (`GEMINI_API_KEY`).
+* **`.gitignore`**: Configuración de Git para omitir recursos temporales del sistema y la caché local.
+
+---
+
+## 🛠️ Configuración Local e Instalación
+
+### 1. Requisitos Previos
+* **Python 3.10 o superior** instalado en el sistema.
+
+### 2. Variables de Entorno
+Crea o edita el archivo `.env` en la raíz del proyecto y agrega tu API Key de Gemini:
+```env
+GEMINI_API_KEY=tu_clave_api_aqui
+```
+
+### 3. Instalación de Dependencias
+Crea y activa un entorno virtual de Python, e instala las dependencias simplificadas:
+```bash
+# Crear entorno virtual (opcional)
+python -m venv .venv
+
+# Activar entorno virtual
+# En Windows (PowerShell):
+.venv\Scripts\Activate.ps1
+# En Linux/macOS:
+source .venv/bin/activate
+
+# Instalar los requerimientos mínimos
+pip install -r requirements.txt
+```
+
+---
+
+## 🏃 Cómo Ejecutar el Agente
+
+Una vez configurado el entorno, puedes chatear interactivamente con el agente de Neouniverse corriendo el script principal en tu terminal:
+
+```bash
+python agente.py
+```
+
+Escribe tus dudas técnicas u operativas en el prompt y el agente te responderá de forma directa. Para terminar la conversación, simplemente escribe **`salir`** y presiona Enter.
