@@ -43,6 +43,7 @@ class InterfazAgenteAlura:
         # Variables de estado
         self.sesion_chat = None
         self.cargando = False
+        self.historial_nvidia = []
         
         # Construir Interfaz Gráfica
         self.crear_widgets()
@@ -59,8 +60,12 @@ class InterfazAgenteAlura:
         self.marco_cabecera = tk.Frame(self.raiz, bg=FONDO_PRINCIPAL, pady=15)
         self.marco_cabecera.pack(fill=tk.X, padx=20)
         
+        # Submarco para textos a la izquierda
+        self.submarco_textos = tk.Frame(self.marco_cabecera, bg=FONDO_PRINCIPAL)
+        self.submarco_textos.pack(side=tk.LEFT, fill=tk.Y)
+        
         self.etiqueta_titulo = tk.Label(
-            self.marco_cabecera, 
+            self.submarco_textos, 
             text="🤖 Agente Alura", 
             font=(FAMILIA_FUENTE, 16, "bold"), 
             bg=FONDO_PRINCIPAL, 
@@ -69,13 +74,42 @@ class InterfazAgenteAlura:
         self.etiqueta_titulo.pack(anchor="w")
         
         self.etiqueta_subtitulo = tk.Label(
-            self.marco_cabecera, 
+            self.submarco_textos, 
             text="Mentor Técnico de Onboarding — Neouniverse", 
             font=(FAMILIA_FUENTE, 9, "italic"), 
             bg=FONDO_PRINCIPAL, 
             fg=TEXTO_MUTADO
         )
         self.etiqueta_subtitulo.pack(anchor="w")
+
+        # Selector de Proveedor IA a la derecha
+        self.variable_proveedor = tk.StringVar(value="Gemini (Google)")
+        self.selector_proveedor = tk.OptionMenu(
+            self.marco_cabecera,
+            self.variable_proveedor,
+            "Gemini (Google)",
+            "Nemotron (NVIDIA)",
+            command=self.cambiar_proveedor
+        )
+        self.selector_proveedor.config(
+            bg="#313244",
+            fg=TEXTO_PRINCIPAL,
+            activebackground=ACENTO_AZUL,
+            activeforeground=FONDO_PRINCIPAL,
+            bd=0,
+            highlightthickness=1,
+            highlightbackground="#45475a",
+            font=(FAMILIA_FUENTE, 9),
+            padx=10,
+            pady=5
+        )
+        self.selector_proveedor["menu"].config(
+            bg="#313244",
+            fg=TEXTO_PRINCIPAL,
+            activebackground=ACENTO_AZUL,
+            activeforeground=FONDO_PRINCIPAL
+        )
+        self.selector_proveedor.pack(side=tk.RIGHT, anchor="center")
 
         # 2. ÁREA DE CHAT (CENTRAL)
         self.marco_chat = tk.Frame(self.raiz, bg=FONDO_PRINCIPAL)
@@ -105,6 +139,13 @@ class InterfazAgenteAlura:
         self.registro_chat.tag_config("timestamp", font=(FAMILIA_FUENTE, 8), foreground=TEXTO_MUTADO)
         self.registro_chat.tag_config("bold", font=(FAMILIA_FUENTE, TAMANO_FUENTE, "bold"))
         self.registro_chat.tag_config("code", font=("Courier New", TAMANO_FUENTE), background=FONDO_CODIGO, foreground=TEXTO_CODIGO)
+        
+        # Etiquetas para Markdown estructurado
+        self.registro_chat.tag_config("h1", font=(FAMILIA_FUENTE, TAMANO_FUENTE + 3, "bold"), foreground=ACENTO_AZUL)
+        self.registro_chat.tag_config("h2", font=(FAMILIA_FUENTE, TAMANO_FUENTE + 1, "bold"), foreground=ACENTO_VERDE)
+        self.registro_chat.tag_config("h3", font=(FAMILIA_FUENTE, TAMANO_FUENTE, "bold"), foreground=ACENTO_ROSA)
+        self.registro_chat.tag_config("list_bullet", font=(FAMILIA_FUENTE, TAMANO_FUENTE, "bold"), foreground=ACENTO_MALVA)
+        self.registro_chat.tag_config("code_block", font=("Courier New", TAMANO_FUENTE), background=FONDO_CODIGO, foreground=TEXTO_CODIGO)
         
         # Hacer que el registro_chat sea de solo lectura para el usuario
         self.registro_chat.config(state=tk.DISABLED)
@@ -157,12 +198,14 @@ class InterfazAgenteAlura:
         )
         self.barra_estado.pack(fill=tk.X)
 
+
     # -------------------------------------------------------------
     # LÓGICA DE INICIALIZACIÓN
     # -------------------------------------------------------------
     def inicializar_agente(self):
         load_dotenv()
         clave_api = os.getenv("GEMINI_API_KEY")
+        clave_nvidia = os.getenv("NVIDIA_API_KEY")
         
         if not clave_api:
             self.cola_respuestas.put(("INIT_ERROR", "No se encontró la clave GEMINI_API_KEY en el archivo .env.\nPor favor agrégala para poder interactuar con el agente."))
@@ -211,7 +254,18 @@ DOCUMENTOS DE NEOUNIVERSE:
                     system_instruction=instrucciones_sistema
                 )
             )
-            self.cola_respuestas.put(("INIT_SUCCESS", "¡Conectado exitosamente con Gemini!"))
+            # Inicializar historial para Nvidia con la misma instrucción
+            self.historial_nvidia = [
+                {"role": "system", "content": instrucciones_sistema}
+            ]
+            
+            mensajes_ok = "¡Conectado exitosamente con Gemini!"
+            if clave_nvidia:
+                mensajes_ok += "\nAPI de NVIDIA (Nemotron) configurada y lista para usarse."
+            else:
+                mensajes_ok += "\nAdvertencia: NVIDIA_API_KEY no detectada. Nemotron estará deshabilitado."
+                
+            self.cola_respuestas.put(("INIT_SUCCESS", mensajes_ok))
         except Exception as e:
             self.cola_respuestas.put(("INIT_ERROR", f"No se pudo conectar con Gemini: {e}"))
 
@@ -233,8 +287,24 @@ DOCUMENTOS DE NEOUNIVERSE:
     def establecer_estado(self, texto):
         self.barra_estado.config(text=texto)
 
+    def cambiar_proveedor(self, valor):
+        if valor == "Nemotron (NVIDIA)":
+            clave_api = os.getenv("NVIDIA_API_KEY")
+            if not clave_api:
+                messagebox.showerror("Error de Configuración", "No se encontró la clave NVIDIA_API_KEY en el archivo .env.")
+                self.variable_proveedor.set("Gemini (Google)")
+                return
+            self.mostrar_mensaje_sistema("Cambiado a proveedor: NVIDIA (Nemotron)")
+        else:
+            clave_api = os.getenv("GEMINI_API_KEY")
+            if not clave_api:
+                messagebox.showerror("Error de Configuración", "No se encontró la clave GEMINI_API_KEY en el archivo .env.")
+                self.variable_proveedor.set("Nemotron (NVIDIA)")
+                return
+            self.mostrar_mensaje_sistema("Cambiado a proveedor: Gemini (Google)")
+
     # -------------------------------------------------------------
-    # FORMATEO DE MENSAJES Y RENDERING DE MARKDOWN BÁSICO
+    # FORMATEO DE MENSAJES Y RENDERING DE MARKDOWN AVANZADO
     # -------------------------------------------------------------
     def insertar_mensaje_formateado(self, remitente, texto):
         self.registro_chat.config(state=tk.NORMAL)
@@ -246,28 +316,87 @@ DOCUMENTOS DE NEOUNIVERSE:
         self.registro_chat.insert(tk.END, f"{remitente} ", tag_cabecera)
         self.registro_chat.insert(tk.END, f"[{ahora}]\n", "timestamp")
         
-        # Procesar Markdown básico (**negrita** y `código`)
-        # Separar bloques por negrita o bloques de código para aplicar etiquetas correspondientes
-        partes = re.split(r'(\*\*.*?\*\*|`.*?`)', texto)
-        for parte in partes:
-            if parte.startswith('**') and parte.endswith('**'):
-                # Eliminar las estrellas e insertar como negrita
-                contenido = parte[2:-2]
-                self.registro_chat.insert(tk.END, contenido, "bold")
-            elif parte.startswith('`') and parte.endswith('`'):
-                # Eliminar las comillas invertidas e insertar como código
-                contenido = parte[1:-1]
-                self.registro_chat.insert(tk.END, contenido, "code")
-            else:
-                self.registro_chat.insert(tk.END, parte)
-                
-        self.registro_chat.insert(tk.END, "\n\n")
+        # Renderizar Markdown de forma estructurada
+        self.renderizar_markdown(texto)
+        
+        self.registro_chat.insert(tk.END, "\n")
         self.registro_chat.config(state=tk.DISABLED)
         self.registro_chat.see(tk.END)
+
+    def renderizar_markdown(self, texto):
+        lineas = texto.split('\n')
+        en_bloque_codigo = False
+        contenido_bloque_codigo = ""
+        
+        for linea in lineas:
+            # 1. Manejo de bloques de código
+            if linea.strip().startswith("```"):
+                if en_bloque_codigo:
+                    self.registro_chat.insert(tk.END, contenido_bloque_codigo, "code_block")
+                    self.registro_chat.insert(tk.END, "\n")
+                    en_bloque_codigo = False
+                    contenido_bloque_codigo = ""
+                else:
+                    en_bloque_codigo = True
+                continue
+                
+            if en_bloque_codigo:
+                contenido_bloque_codigo += linea + "\n"
+                continue
+                
+            # 2. Encabezados (Headers)
+            match_h1 = re.match(r'^#\s+(.*)', linea)
+            match_h2 = re.match(r'^##\s+(.*)', linea)
+            match_h3 = re.match(r'^###\s+(.*)', linea)
+            
+            if match_h1:
+                self.insertar_linea_formateada(match_h1.group(1), "h1")
+                self.registro_chat.insert(tk.END, "\n")
+            elif match_h2:
+                self.insertar_linea_formateada(match_h2.group(1), "h2")
+                self.registro_chat.insert(tk.END, "\n")
+            elif match_h3:
+                self.insertar_linea_formateada(match_h3.group(1), "h3")
+                self.registro_chat.insert(tk.END, "\n")
+            # 3. Listas con viñetas
+            elif re.match(r'^(\*|-|•)\s+(.*)', linea):
+                match_lista = re.match(r'^(\*|-|•)\s+(.*)', linea)
+                self.registro_chat.insert(tk.END, "  • ", "list_bullet")
+                self.insertar_linea_formateada(match_lista.group(2))
+                self.registro_chat.insert(tk.END, "\n")
+            # 4. Línea normal
+            else:
+                self.insertar_linea_formateada(linea)
+                self.registro_chat.insert(tk.END, "\n")
+
+    def insertar_linea_formateada(self, linea, tag_adicional=None):
+        partes = re.split(r'(\*\*.*?\*\*|`.*?`)', linea)
+        for parte in partes:
+            tags = []
+            if tag_adicional:
+                tags.append(tag_adicional)
+                
+            if parte.startswith('**') and parte.endswith('**'):
+                contenido = parte[2:-2]
+                tags.append("bold")
+                self.registro_chat.insert(tk.END, contenido, tuple(tags))
+            elif parte.startswith('`') and parte.endswith('`'):
+                contenido = parte[1:-1]
+                tags.append("code")
+                self.registro_chat.insert(tk.END, contenido, tuple(tags))
+            else:
+                self.registro_chat.insert(tk.END, parte, tuple(tags) if tags else None)
 
     # -------------------------------------------------------------
     # LÓGICA DE ENVÍO DE MENSAJES Y ASINCRONÍA
     # -------------------------------------------------------------
+    def animar_cargando(self, fotograma):
+        if not self.cargando:
+            return
+        puntos = "." * (fotograma % 4)
+        self.establecer_estado(f"Agente Alura está pensando{puntos}")
+        self.raiz.after(400, self.animar_cargando, fotograma + 1)
+
     def enviar_mensaje(self):
         if self.cargando or not self.sesion_chat:
             return
@@ -284,15 +413,55 @@ DOCUMENTOS DE NEOUNIVERSE:
         self.cargando = True
         self.entrada_mensaje.config(state=tk.DISABLED)
         self.boton_enviar.config(state=tk.DISABLED)
-        self.establecer_estado("Agente Alura está pensando...")
+        self.animar_cargando(0)
         
-        # Crear hilo para consultar a Gemini sin congelar la interfaz
-        threading.Thread(target=self.hilo_consultar_gemini, args=(mensaje,), daemon=True).start()
+        # Crear hilo para consultar según el proveedor seleccionado
+        proveedor = self.variable_proveedor.get()
+        if proveedor == "Gemini (Google)":
+            threading.Thread(target=self.hilo_consultar_gemini, args=(mensaje,), daemon=True).start()
+        else:
+            threading.Thread(target=self.hilo_consultar_nvidia, args=(mensaje,), daemon=True).start()
 
     def hilo_consultar_gemini(self, mensaje):
         try:
             respuesta = self.sesion_chat.send_message(mensaje)
             self.cola_respuestas.put(("CHAT_SUCCESS", respuesta.text))
+        except Exception as e:
+            self.cola_respuestas.put(("CHAT_ERROR", str(e)))
+
+    def hilo_consultar_nvidia(self, mensaje):
+        try:
+            clave_api = os.getenv("NVIDIA_API_KEY")
+            modelo = os.getenv("NVIDIA_MODEL", "nvidia/llama-3.1-nemotron-70b-instruct")
+            
+            # Agregar mensaje del usuario al historial local
+            self.historial_nvidia.append({"role": "user", "content": mensaje})
+            
+            url = "https://integrate.api.nvidia.com/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {clave_api}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": modelo,
+                "messages": self.historial_nvidia,
+                "temperature": 0.5,
+                "max_tokens": 1024
+            }
+            
+            import requests
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            
+            if response.status_code != 200:
+                raise Exception(f"HTTP {response.status_code}: {response.text}")
+                
+            datos_respuesta = response.json()
+            texto_respuesta = datos_respuesta["choices"][0]["message"]["content"]
+            
+            # Agregar respuesta del asistente al historial local
+            self.historial_nvidia.append({"role": "assistant", "content": texto_respuesta})
+            
+            self.cola_respuestas.put(("CHAT_SUCCESS", texto_respuesta))
         except Exception as e:
             self.cola_respuestas.put(("CHAT_ERROR", str(e)))
 

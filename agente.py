@@ -49,15 +49,7 @@ if os.path.exists(directorio_conocimientos):
 else:
     print(f"[ADVERTENCIA] No existe la carpeta '{directorio_conocimientos}' en la raíz del proyecto.")
 
-# 3. Conectarse a Gemini
-print("\nConectando con la inteligencia artificial de Gemini...")
-try:
-    cliente_ai = genai.Client(api_key=clave_api)
-except Exception as e:
-    print(f"[ERROR] No se pudo inicializar la conexión con Gemini: {e}")
-    sys.exit(1)
-
-# Prompt del sistema con instrucciones simplificadas
+# 3. Prompt del sistema con instrucciones simplificadas
 instrucciones_sistema = f"""Actúas como 'Agente Alura', un mentor técnico para la compañía Neouniverse.
 Tu trabajo es responder preguntas de los colaboradores basándote estrictamente en los documentos corporativos provistos a continuación.
 
@@ -70,30 +62,57 @@ REGLAS SENCILLAS:
 DOCUMENTOS DE NEOUNIVERSE:
 {contexto_manuales}"""
 
-# 4. Iniciar la sesión de chat interactiva
+# 4. Selector de Proveedor
+print("\nSeleccione el proveedor de Inteligencia Artificial:")
+print("1. Gemini (Google) [Por defecto]")
+print("2. Nemotron (NVIDIA)")
+seleccion = input("Selección (1 o 2): ").strip()
+
+proveedor = "gemini"
+clave_nvidia = None
+modelo_nvidia = None
+historial_nvidia = []
+sesion_chat = None
+
+if seleccion == "2":
+    proveedor = "nvidia"
+    clave_nvidia = os.getenv("NVIDIA_API_KEY")
+    modelo_nvidia = os.getenv("NVIDIA_MODEL", "nvidia/llama-3.1-nemotron-70b-instruct")
+    if not clave_nvidia:
+        print("[ERROR] No se encontró la clave NVIDIA_API_KEY en el archivo .env")
+        sys.exit(1)
+    # Inicializar historial para Nvidia
+    historial_nvidia = [
+        {"role": "system", "content": instrucciones_sistema}
+    ]
+    print(f"\nConectando con la API de NVIDIA (Modelo: {modelo_nvidia})...")
+else:
+    print("\nConectando con la inteligencia artificial de Gemini...")
+    try:
+        cliente_ai = genai.Client(api_key=clave_api)
+        # Creamos un chat continuo en Gemini que recordará el historial de la conversación
+        sesion_chat = cliente_ai.chats.create(
+            model="gemini-2.5-flash",
+            config=types.GenerateContentConfig(
+                system_instruction=instrucciones_sistema
+            )
+        )
+    except Exception as e:
+        print(f"[ERROR] No se pudo inicializar la conexión con Gemini: {e}")
+        sys.exit(1)
+
+# 5. Iniciar la sesión de chat interactiva
 print("\n==================================================================")
-print("🤖 Agente Alura — Consola de Chat Interactiva (Python Simplificado) 🤖")
+print(f"🤖 Agente Alura — Consola de Chat Interactiva ({'NVIDIA Nemotron' if proveedor == 'nvidia' else 'Gemini Google'}) 🤖")
 print("==================================================================")
 print("Escribe tus consultas sobre Neouniverse. Para salir escribe: salir\n")
 
-try:
-    # Creamos un chat continuo en Gemini que recordará el historial de la conversación
-    sesion_chat = cliente_ai.chats.create(
-        model="gemini-2.5-flash",
-        config=types.GenerateContentConfig(
-            system_instruction=instrucciones_sistema
-        )
-    )
-except Exception as e:
-    print(f"[ERROR] No se pudo iniciar la sesión de chat: {e}")
-    sys.exit(1)
-
-# 5. Bucle infinito para chatear en la terminal
+# 6. Bucle infinito para chatear en la terminal
 while True:
     try:
         pregunta = input("\nTú: ").strip()
         
-        # Ignorar entradas vacías
+        # Ignorar de forma segura entradas vacías
         if not pregunta:
             continue
             
@@ -104,11 +123,37 @@ while True:
             
         print("Agente Alura está pensando...")
         
-        # Enviar la pregunta al chat de Gemini
-        respuesta = sesion_chat.send_message(pregunta)
-        
-        # Mostrar la respuesta limpia en pantalla
-        print(f"\nAgente Alura:\n{respuesta.text}")
+        if proveedor == "gemini":
+            # Enviar la pregunta al chat de Gemini
+            respuesta = sesion_chat.send_message(pregunta)
+            print(f"\nAgente Alura:\n{respuesta.text}")
+        else:
+            # Enviar la pregunta a Nvidia usando requests
+            historial_nvidia.append({"role": "user", "content": pregunta})
+            
+            url = "https://integrate.api.nvidia.com/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {clave_nvidia}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": modelo_nvidia,
+                "messages": historial_nvidia,
+                "temperature": 0.5,
+                "max_tokens": 1024
+            }
+            
+            import requests
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            
+            if response.status_code == 200:
+                respuesta_json = response.json()
+                texto_respuesta = respuesta_json["choices"][0]["message"]["content"]
+                historial_nvidia.append({"role": "assistant", "content": texto_respuesta})
+                print(f"\nAgente Alura:\n{texto_respuesta}")
+            else:
+                print(f"\n⚠️ Error al obtener respuesta de NVIDIA NIM: {response.status_code} - {response.text}")
+                
         print("-" * 60)
         
     except KeyboardInterrupt:
