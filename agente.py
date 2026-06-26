@@ -65,7 +65,7 @@ DOCUMENTOS DE NEOUNIVERSE:
 # 4. Selector de Proveedor
 print("\nSeleccione el proveedor de Inteligencia Artificial:")
 print("1. Gemini (Google) [Por defecto]")
-print("2. Nemotron (NVIDIA)")
+print("2. NVIDIA (NIM)")
 seleccion = input("Selección (1 o 2): ").strip()
 
 proveedor = "gemini"
@@ -103,7 +103,7 @@ else:
 
 # 5. Iniciar la sesión de chat interactiva
 print("\n==================================================================")
-print(f"🤖 Agente Alura — Consola de Chat Interactiva ({'NVIDIA Nemotron' if proveedor == 'nvidia' else 'Gemini Google'}) 🤖")
+print(f"🤖 Agente Alura — Consola de Chat Interactiva ({'NVIDIA NIM' if proveedor == 'nvidia' else 'Gemini Google'}) 🤖")
 print("==================================================================")
 print("Escribe tus consultas sobre Neouniverse. Para salir escribe: salir\n")
 

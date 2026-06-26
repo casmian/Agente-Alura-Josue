@@ -88,7 +88,7 @@ class InterfazAgenteAlura:
             self.marco_cabecera,
             self.variable_proveedor,
             "Gemini (Google)",
-            "Nemotron (NVIDIA)",
+            "NVIDIA (NIM)",
             command=self.cambiar_proveedor
         )
         self.selector_proveedor.config(
@@ -261,9 +261,9 @@ DOCUMENTOS DE NEOUNIVERSE:
             
             mensajes_ok = "¡Conectado exitosamente con Gemini!"
             if clave_nvidia:
-                mensajes_ok += "\nAPI de NVIDIA (Nemotron) configurada y lista para usarse."
+                mensajes_ok += "\nAPI de NVIDIA (NIM) configurada y lista para usarse."
             else:
-                mensajes_ok += "\nAdvertencia: NVIDIA_API_KEY no detectada. Nemotron estará deshabilitado."
+                mensajes_ok += "\nAdvertencia: NVIDIA_API_KEY no detectada. NVIDIA NIM estará deshabilitado."
                 
             self.cola_respuestas.put(("INIT_SUCCESS", mensajes_ok))
         except Exception as e:
@@ -288,18 +288,18 @@ DOCUMENTOS DE NEOUNIVERSE:
         self.barra_estado.config(text=texto)
 
     def cambiar_proveedor(self, valor):
-        if valor == "Nemotron (NVIDIA)":
+        if valor == "NVIDIA (NIM)":
             clave_api = os.getenv("NVIDIA_API_KEY")
             if not clave_api:
                 messagebox.showerror("Error de Configuración", "No se encontró la clave NVIDIA_API_KEY en el archivo .env.")
                 self.variable_proveedor.set("Gemini (Google)")
                 return
-            self.mostrar_mensaje_sistema("Cambiado a proveedor: NVIDIA (Nemotron)")
+            self.mostrar_mensaje_sistema("Cambiado a proveedor: NVIDIA (NIM)")
         else:
             clave_api = os.getenv("GEMINI_API_KEY")
             if not clave_api:
                 messagebox.showerror("Error de Configuración", "No se encontró la clave GEMINI_API_KEY en el archivo .env.")
-                self.variable_proveedor.set("Nemotron (NVIDIA)")
+                self.variable_proveedor.set("NVIDIA (NIM)")
                 return
             self.mostrar_mensaje_sistema("Cambiado a proveedor: Gemini (Google)")
 
