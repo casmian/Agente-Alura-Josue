@@ -4,6 +4,9 @@ import warnings
 import urllib.request
 import json
 import urllib.parse
+import threading
+import http.server
+import socketserver
 
 # Silenciar todas las advertencias y avisos de librerías externas (ej. deprecaciones de LangChain)
 warnings.filterwarnings("ignore")
@@ -28,6 +31,30 @@ clave_api = os.getenv("GEMINI_API_KEY")
 if not clave_api:
     print("[ERROR] No se encontró GEMINI_API_KEY en el archivo .env")
     sys.exit(1)
+
+# Iniciar servidor web de salud para plataformas como Render
+def iniciar_servidor_salud():
+    port = int(os.getenv("PORT", 8080))
+    class HealthHandler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write("Agente Alura está corriendo correctamente en segundo plano.".encode("utf-8"))
+        
+        def log_message(self, format, *args):
+            # Evitar saturar la consola de Render con logs de peticiones de salud
+            pass
+
+    try:
+        with socketserver.TCPServer(("", port), HealthHandler) as httpd:
+            httpd.serve_forever()
+    except Exception as e:
+        pass
+
+if os.getenv("PORT") or os.getenv("RENDER"):
+    threading.Thread(target=iniciar_servidor_salud, daemon=True).start()
+
 
 # Leer todos los documentos de la base de conocimientos
 contexto = ""
