@@ -112,7 +112,7 @@ def obtener_cadena_agente():
     return chain, llm_with_tools
 
 # HTML/CSS Embebido con Diseño Premium e Interfaz de Chat
-HTML_CHAT = """
+HTML_CHAT = r"""
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -120,6 +120,7 @@ HTML_CHAT = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agente Alura — Mentor de Onboarding</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1b4b 100%);
@@ -464,34 +465,14 @@ HTML_CHAT = """
             msgDiv.classList.add('message', sender === 'user' ? 'message-user' : 'message-agent');
             
             if (sender === 'agent') {
-                // Formateador markdown básico y rápido para la web
-                msgDiv.innerHTML = formatMarkdown(text);
+                // Usar la librería Marked.js para renderizar Markdown con soporte completo de HTML
+                msgDiv.innerHTML = marked.parse(text);
             } else {
                 msgDiv.textContent = text;
             }
             
             container.appendChild(msgDiv);
             container.scrollTop = container.scrollHeight;
-        }
-
-        function formatMarkdown(text) {
-            let formatted = text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/\\n/g, '<br>')
-                .replace(/\n/g, '<br>')
-                // Formatear bloques de código
-                .replace(/```(.*?)\s+([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-                // Formatear código en línea
-                .replace(/`(.*?)`/g, '<code>$1</code>')
-                // Negritas
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                // Listas
-                .replace(/^\s*-\s+(.*?)(?:<br>|$)/gm, '<li>$1</li>')
-                .replace(/(<li>.*?<\/li>)/s, '<ul>$1</ul>');
-
-            return formatted;
         }
     </script>
 </body>
