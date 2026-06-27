@@ -1,3 +1,5 @@
 langchain-google-genai
 langchain
 python-dotenv
+flask
+gunicorn
