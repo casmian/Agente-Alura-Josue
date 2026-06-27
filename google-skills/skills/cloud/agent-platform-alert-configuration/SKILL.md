@@ -127,10 +127,8 @@ you MUST adhere to the following safety tiers based on the action requested:
         project.
 *   **Directory Inference**: Deploy configuration files to target Terraform or
     SRE folders (e.g. `monitoring/`, `ops/`, `sre/`). Use tools to locate where
-    alert policies or state pointers exist in the project, rather than blindly
     writing to the current working directory.
 *   **Notification Channels**: By default, never configure any notification
-    channels without user input. If the user explicitly provides a notification
     channel in their prompt, configure the alerts to use it. If no notification
     channel is provided, you MUST explicitly ask the user in your final response
     if they would like to configure notification channels. **This is a mandatory
