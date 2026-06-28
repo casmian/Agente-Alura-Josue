@@ -88,4 +88,7 @@ Como comprobación de que el **Agente Alura** se encuentra activo y corriendo de
    * Ver captura: [Evidencia de Inicialización](./evidencias/inicializacion_nube.png)
 2. **Prueba de Funcionamiento y Chat**: Conversación interactiva en tiempo real con el agente desde la consola web del navegador en la nube:
    * Ver captura: [Evidencia de Chat en la Nube](./evidencias/chat_nube.png)
+3. **Comprobación de Formato de Texto Limpio**: Captura que demuestra que la respuesta del agente se muestra con el texto estructurado correctamente y libre de formatos crudos del diccionario:
+   * Ver captura: [Evidencia de Formato Limpio](./evidencias/formato_limpio_nube.png)
+
 
