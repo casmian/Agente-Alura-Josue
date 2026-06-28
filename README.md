@@ -77,3 +77,15 @@ python agente.py
 ```
 
 Escribe tus consultas directamente en el prompt interactivo. El agente evaluará si requiere de herramientas externas o del contexto local para responderte. Para finalizar la conversación, simplemente escribe **`salir`** y presiona Enter.
+
+---
+
+## ☁️ Evidencia de Despliegue en la Nube (PythonAnywhere)
+
+Como comprobación de que el **Agente Alura** se encuentra activo y corriendo de forma interactiva en la nube, se documentan las siguientes evidencias:
+
+1. **Instalación e Inicialización del Entorno**: Clonación del repositorio, instalación exitosa de los requerimientos y carga inicial del agente en la terminal de PythonAnywhere:
+   * Ver captura: [Evidencia de Inicialización](./evidencias/inicializacion_nube.png)
+2. **Prueba de Funcionamiento y Chat**: Conversación interactiva en tiempo real con el agente desde la consola web del navegador en la nube:
+   * Ver captura: [Evidencia de Chat en la Nube](./evidencias/chat_nube.png)
+

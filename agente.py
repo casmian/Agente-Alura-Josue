@@ -169,6 +169,19 @@ except Exception as e:
     print(f"[ERROR] No se pudo inicializar el Agente Alura: {e}")
     sys.exit(1)
 
+def limpiar_contenido(content) -> str:
+    if isinstance(content, str):
+        return content
+    elif isinstance(content, list):
+        textos = []
+        for bloque in content:
+            if isinstance(bloque, dict) and "text" in bloque:
+                textos.append(bloque["text"])
+            elif isinstance(bloque, str):
+                textos.append(bloque)
+        return "".join(textos)
+    return str(content)
+
 print("\n" + "=" * 55)
 # Título limpio del chat interactivo
 print("🤖 Agente Alura — Tutor Técnico Interactivo 🤖")
@@ -225,11 +238,11 @@ while True:
             # Volver a invocar el modelo con el historial que ahora incluye el ToolMessage
             respuesta_final = llm_with_tools.invoke(historial.messages)
             historial.add_message(respuesta_final)
-            print(f"\nAgente Alura:\n{respuesta_final.content}")
+            print(f"\nAgente Alura:\n{limpiar_contenido(respuesta_final.content)}")
         else:
             # Si no requirió herramientas, añadir la respuesta directa del LLM al historial
             historial.add_message(respuesta)
-            print(f"\nAgente Alura:\n{respuesta.content}")
+            print(f"\nAgente Alura:\n{limpiar_contenido(respuesta.content)}")
             
         print("-" * 55)
         
